@@ -15,6 +15,13 @@ spring:
       ddl-auto: ${HIBERNATE_DDL_AUTO:validate}
     open-in-view: ${OPEN_IN_VIEW:false}
 
+  data:
+    redis:
+      host: ${REDIS_URL:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:password}
+      session-max-inactive-interval: ${USER_SESSION_MAX_INACTIVE_INTERVAL:30m}
+
 security:
   cors:
     apply-pattern: ${CORS_APPLY_PATTERN:/**}
