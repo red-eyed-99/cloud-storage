@@ -1,3 +1,13 @@
 spring:
   application:
     name: cloud-storage
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/cloud-storage-db}
+    username: ${DATABASE_USERNAME:user}
+    password: ${DATABASE_PASSWORD:password}
+
+  jpa:
+    hibernate:
+      ddl-auto: ${HIBERNATE_DDL_AUTO:validate}
+    open-in-view: ${OPEN_IN_VIEW:false}
