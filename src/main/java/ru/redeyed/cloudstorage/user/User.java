@@ -10,6 +10,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import ru.redeyed.cloudstorage.validation.annotation.PasswordBcryptEncoded;
+import ru.redeyed.cloudstorage.validation.annotation.ValidUsername;
 import java.util.UUID;
 
 @Entity
@@ -24,7 +26,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @ValidUsername
     private String username;
 
+    @PasswordBcryptEncoded
     private String password;
 }
