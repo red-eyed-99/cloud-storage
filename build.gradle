@@ -18,6 +18,12 @@ repositories {
     mavenCentral()
 }
 
+compileJava {
+    options.compilerArgs = [
+            '-Amapstruct.defaultComponentModel=spring'
+    ]
+}
+
 dependencies {
     implementation(
             libs.bundles.spring.boot.starters,
