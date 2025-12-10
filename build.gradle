@@ -20,6 +20,7 @@ repositories {
 
 compileJava {
     options.compilerArgs = [
+            '-parameters',
             '-Amapstruct.defaultComponentModel=spring'
     ]
 }
