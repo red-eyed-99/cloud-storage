@@ -14,3 +14,14 @@ spring:
     hibernate:
       ddl-auto: ${HIBERNATE_DDL_AUTO:validate}
     open-in-view: ${OPEN_IN_VIEW:false}
+
+security:
+  cors:
+    apply-pattern: ${CORS_APPLY_PATTERN:/**}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:8080}
+    allowed-methods: ${CORS_ALLOWED_METHODS:*}
+    allowed-headers: ${CORS_ALLOWED_HEADERS:*}
+    allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+
+  open-endpoints:
+    POST: ${POST_OPEN_ENDPOINTS:/api/auth/sign-in, /api/auth/sign-up}

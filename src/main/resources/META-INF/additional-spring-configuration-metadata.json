@@ -1,0 +1,41 @@
+{
+  "hints": [
+    {
+      "name": "security.open-endpoints.keys",
+      "values": [
+        {
+          "value": "GET",
+          "description": "HTTP method GET."
+        },
+        {
+          "value": "POST",
+          "description": "HTTP method POST."
+        },
+        {
+          "value": "PUT",
+          "description": "HTTP method PUT."
+        },
+        {
+          "value": "PATCH",
+          "description": "HTTP method PATCH."
+        },
+        {
+          "value": "DELETE",
+          "description": "HTTP method DELETE."
+        },
+        {
+          "value": "HEAD",
+          "description": "HTTP method HEAD."
+        },
+        {
+          "value": "OPTIONS",
+          "description": "HTTP method OPTIONS."
+        },
+        {
+          "value": "TRACE",
+          "description": "HTTP method TRACE."
+        }
+      ]
+    }
+  ]
+}
