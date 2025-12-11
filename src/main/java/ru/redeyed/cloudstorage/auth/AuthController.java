@@ -30,7 +30,7 @@ public class AuthController {
     public ResponseEntity<AuthResponseDto> signUp(@Valid @RequestBody SignUpRequestDto signUpRequestDto,
                                                   HttpServletRequest request, HttpServletResponse response) {
 
-        var authentication = authService.authenticate(signUpRequestDto);
+        var authentication = authService.signUp(signUpRequestDto);
 
         invalidateExistingSession(request);
         updateSecurityContext(request, response, authentication);
@@ -46,7 +46,7 @@ public class AuthController {
     public ResponseEntity<AuthResponseDto> signIn(@Valid @RequestBody SignInRequestDto signInRequestDto,
                                                   HttpServletRequest request, HttpServletResponse response) {
 
-        var authentication = authService.authenticate(signInRequestDto);
+        var authentication = authService.signIn(signInRequestDto);
 
         invalidateExistingSession(request);
         updateSecurityContext(request, response, authentication);

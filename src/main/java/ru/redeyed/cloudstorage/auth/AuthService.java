@@ -24,7 +24,7 @@ public class AuthService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public Authentication authenticate(SignInRequestDto signInRequestDto) {
+    public Authentication signIn(SignInRequestDto signInRequestDto) {
         var authToken = getUnauthenticatedToken(signInRequestDto);
 
         signInRequestDto.setPassword(null);
@@ -36,7 +36,7 @@ public class AuthService {
         return authentication;
     }
 
-    public Authentication authenticate(SignUpRequestDto signUpRequestDto) {
+    public Authentication signUp(SignUpRequestDto signUpRequestDto) {
         var authToken = getAuthenticatedToken(signUpRequestDto);
 
         encodePassword(signUpRequestDto);

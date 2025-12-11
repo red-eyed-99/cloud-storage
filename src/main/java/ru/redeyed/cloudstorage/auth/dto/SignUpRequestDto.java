@@ -3,8 +3,8 @@ package ru.redeyed.cloudstorage.auth.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import ru.redeyed.cloudstorage.validation.annotation.ValidPassword;
-import ru.redeyed.cloudstorage.validation.annotation.ValidUsername;
+import ru.redeyed.cloudstorage.common.validation.annotation.ValidPassword;
+import ru.redeyed.cloudstorage.common.validation.annotation.ValidUsername;
 
 @AllArgsConstructor
 @Getter

@@ -1,8 +1,8 @@
-package ru.redeyed.cloudstorage.validation.validator;
+package ru.redeyed.cloudstorage.common.validation.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import ru.redeyed.cloudstorage.validation.annotation.PasswordBcryptEncoded;
+import ru.redeyed.cloudstorage.common.validation.annotation.PasswordBcryptEncoded;
 import java.util.regex.Pattern;
 
 public class PasswordBcryptValidator implements ConstraintValidator<PasswordBcryptEncoded, String> {

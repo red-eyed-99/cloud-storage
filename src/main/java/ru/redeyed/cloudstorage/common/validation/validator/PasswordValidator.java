@@ -1,8 +1,8 @@
-package ru.redeyed.cloudstorage.validation.validator;
+package ru.redeyed.cloudstorage.common.validation.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import ru.redeyed.cloudstorage.validation.annotation.ValidPassword;
+import ru.redeyed.cloudstorage.common.validation.annotation.ValidPassword;
 import java.util.regex.Pattern;
 
 public class PasswordValidator implements ConstraintValidator<ValidPassword, String> {

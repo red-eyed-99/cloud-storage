@@ -10,8 +10,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import ru.redeyed.cloudstorage.validation.annotation.PasswordBcryptEncoded;
-import ru.redeyed.cloudstorage.validation.annotation.ValidUsername;
+import ru.redeyed.cloudstorage.common.validation.annotation.PasswordBcryptEncoded;
+import ru.redeyed.cloudstorage.common.validation.annotation.ValidUsername;
 import java.util.UUID;
 
 @Entity
