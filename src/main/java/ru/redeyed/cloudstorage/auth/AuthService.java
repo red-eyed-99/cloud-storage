@@ -37,15 +37,13 @@ public class AuthService {
     }
 
     public Authentication signUp(SignUpRequestDto signUpRequestDto) {
-        var authToken = getAuthenticatedToken(signUpRequestDto);
-
         encodePassword(signUpRequestDto);
 
         var createUserDto = authUserMapper.toCreateUserDto(signUpRequestDto);
 
         userService.create(createUserDto);
 
-        return authToken;
+        return getAuthenticatedToken(signUpRequestDto);
     }
 
     private UsernamePasswordAuthenticationToken getAuthenticatedToken(SignUpRequestDto signUpRequestDto) {
