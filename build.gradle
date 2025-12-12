@@ -32,13 +32,25 @@ dependencies {
             libs.lombok.mapstruct.binding
     )
 
-    compileOnly(libs.lombok, libs.mapstruct)
+    compileOnly(
+            libs.lombok,
+            libs.mapstruct
+    )
 
     runtimeOnly libs.postgresql
 
-    testImplementation libs.spring.boot.starter.test
+    annotationProcessor(
+            libs.lombok,
+            libs.mapstruct.processor
+    )
 
-    annotationProcessor(libs.lombok, libs.mapstruct.processor)
+    testImplementation (
+            libs.bundles.spring.boot.test.starters,
+            libs.bundles.testcontainers
+    )
+
+    testCompileOnly libs.lombok
+    testAnnotationProcessor libs.lombok
 }
 
 test {
