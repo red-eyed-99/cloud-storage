@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
 public @interface ValidUsername {
 
     String message() default """
-            Incorrect username. Only latin letters and underscores are allowed.
+            Incorrect username. Only latin letters, digits and underscores are allowed.
             And the username must not begin or end with an underscore.
             """;
 
