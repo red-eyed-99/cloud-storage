@@ -1,6 +1,10 @@
-
 spring:
   datasource:
     url: test
     username: test
     password: test
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  liquibase:
+    change-log: db/changelog/test-db.changelog-master.yaml
