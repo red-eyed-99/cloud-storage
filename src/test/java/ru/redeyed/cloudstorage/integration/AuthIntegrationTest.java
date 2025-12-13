@@ -27,6 +27,7 @@ import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
@@ -51,13 +52,13 @@ class AuthIntegrationTest extends BaseIntegrationTest {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    private RedisIndexedSessionRepository.RedisSession redisSession;
+    private RedisIndexedSessionRepository.RedisSession initialRedisSession;
 
     @BeforeEach
     void createRedisSession() {
         var redisSession = redisSessionRepository.createSession();
         redisSessionRepository.save(redisSession);
-        this.redisSession = redisSession;
+        this.initialRedisSession = redisSession;
     }
 
     @Nested
@@ -70,24 +71,26 @@ class AuthIntegrationTest extends BaseIntegrationTest {
             var signInRequestDto = AuthTestData.getSignInRequestDto();
             var jsonRequest = JsonUtil.toJson(signInRequestDto);
 
-            var sessionId = getEncodedSessionId();
-            var sessionCookie = new Cookie(COOKIE_SESSION_NAME, sessionId);
+            var encodedInitialSessionId = getEncodedInitialSessionId();
+            var initialSessionKey = SESSION_KEYS_NAMESPACE + initialRedisSession.getId();
+            var initialSessionCookie = new Cookie(COOKIE_SESSION_NAME, encodedInitialSessionId);
 
             var mvcResult = mockMvc.perform(post(SIGN_IN_URL)
-                            .cookie(sessionCookie)
+                            .cookie(initialSessionCookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
                     .andExpectAll(
                             status().isOk(),
-                            cookie().value(COOKIE_SESSION_NAME, Matchers.not(sessionId))
+                            cookie().value(COOKIE_SESSION_NAME, Matchers.not(encodedInitialSessionId))
                     )
                     .andReturn();
 
-            var sessionKey = getSessionKey(mvcResult);
-            var username = getAuthenticatedUsername(sessionKey);
+            var newSessionKey = getNewSessionKey(mvcResult);
+            var username = getAuthenticatedUsername(newSessionKey);
 
             assertAll(
-                    () -> assertTrue(redisTemplate.hasKey(sessionKey)),
+                    () -> assertTrue(redisTemplate.hasKey(newSessionKey)),
+                    () -> assertFalse(redisTemplate.hasKey(initialSessionKey)),
                     () -> assertEquals(signInRequestDto.getUsername(), username)
             );
         }
@@ -101,7 +104,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
 
             var jsonRequest = JsonUtil.toJson(signInRequestDto);
 
-            var sessionCookie = new Cookie(COOKIE_SESSION_NAME, getEncodedSessionId());
+            var sessionCookie = new Cookie(COOKIE_SESSION_NAME, getEncodedInitialSessionId());
 
             mockMvc.perform(post(SIGN_IN_URL)
                             .cookie(sessionCookie)
@@ -122,7 +125,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
 
             var jsonRequest = JsonUtil.toJson(signInRequestDto);
 
-            var sessionCookie = new Cookie(COOKIE_SESSION_NAME, getEncodedSessionId());
+            var sessionCookie = new Cookie(COOKIE_SESSION_NAME, getEncodedInitialSessionId());
 
             mockMvc.perform(post(SIGN_IN_URL)
                             .cookie(sessionCookie)
@@ -150,13 +153,13 @@ class AuthIntegrationTest extends BaseIntegrationTest {
         }
     }
 
-    private String getEncodedSessionId() {
-        var sessionIdBytes = redisSession.getId().getBytes();
+    private String getEncodedInitialSessionId() {
+        var sessionIdBytes = initialRedisSession.getId().getBytes();
         var encodedSessionIdBytes = Base64.encode(sessionIdBytes);
         return new String(encodedSessionIdBytes);
     }
 
-    private String getSessionKey(MvcResult mvcResult) {
+    private String getNewSessionKey(MvcResult mvcResult) {
         var response = mvcResult.getResponse();
 
         var sessionCookie = response.getCookie(COOKIE_SESSION_NAME);
