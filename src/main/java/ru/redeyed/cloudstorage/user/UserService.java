@@ -27,7 +27,7 @@ public class UserService implements UserDetailsService {
         var user = userMapper.toUser(createUserDto);
 
         try {
-            userRepository.save(user);
+            userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException exception) {
             throw new UserAlreadyExistsException();
         }
