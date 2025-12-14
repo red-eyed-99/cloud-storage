@@ -1,8 +1,9 @@
-package ru.redeyed.cloudstorage.util;
+package ru.redeyed.cloudstorage.util.data;
 
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import org.junit.jupiter.params.provider.Arguments;
+import java.util.function.Supplier;
 
 @UtilityClass
 public class IncorrectTestDataUtil {
@@ -59,6 +60,12 @@ public class IncorrectTestDataUtil {
         var description = fieldName + " ends with underscore";
         setIncorrectValue(dto, fieldName, fieldValue);
         return Arguments.of(dto, description);
+    }
+
+    public static <T> T getIncorrectDto(Supplier<T> dtoSupplier, String incorrectFieldName, Object incorrectFieldValue) {
+        var dto = dtoSupplier.get();
+        setIncorrectValue(dto, incorrectFieldName, incorrectFieldValue);
+        return dto;
     }
 
     @SneakyThrows

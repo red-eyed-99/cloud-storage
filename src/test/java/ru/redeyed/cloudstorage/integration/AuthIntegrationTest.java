@@ -3,7 +3,6 @@ package ru.redeyed.cloudstorage.integration;
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,21 +12,24 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.session.data.redis.RedisIndexedSessionRepository;
-import org.springframework.session.data.redis.RedisSessionRepository;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.testcontainers.shaded.org.bouncycastle.util.encoders.Base64;
+import ru.redeyed.cloudstorage.argumentsprovider.InvalidSignInRequestDtoArgumentsProvider;
+import ru.redeyed.cloudstorage.argumentsprovider.InvalidSignUpRequestDtoArgumentsProvider;
+import ru.redeyed.cloudstorage.session.RedisSessionManager;
 import ru.redeyed.cloudstorage.auth.dto.SignInRequestDto;
-import ru.redeyed.cloudstorage.provider.InvalidSignInRequestDtoArgumentsProvider;
+import ru.redeyed.cloudstorage.auth.dto.SignUpRequestDto;
+import ru.redeyed.cloudstorage.user.UserService;
 import ru.redeyed.cloudstorage.util.JsonUtil;
 import ru.redeyed.cloudstorage.util.data.AuthTestData;
+import ru.redeyed.cloudstorage.util.data.IncorrectTestDataUtil;
+import ru.redeyed.cloudstorage.util.data.UserTestData;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
@@ -38,28 +40,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthIntegrationTest extends BaseIntegrationTest {
 
     private static final String SIGN_IN_URL = "/api/auth/sign-in";
-
-    private static final String SESSION_KEYS_NAMESPACE = RedisSessionRepository.DEFAULT_KEY_NAMESPACE + ":sessions:";
-
-    private static final String SESSION_SECURITY_CONTEXT_ATTRIBUTE =
-            "sessionAttr:" + HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY;
-
-    private static final String COOKIE_SESSION_NAME = "SESSION";
+    private static final String SIGN_UP_URL = "/api/auth/sign-up";
+    private static final String SIGN_OUT_URL = "/api/auth/sign-out";
 
     private final MockMvc mockMvc;
 
-    private final RedisIndexedSessionRepository redisSessionRepository;
+    private final UserService userService;
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    private RedisIndexedSessionRepository.RedisSession initialRedisSession;
-
-    @BeforeEach
-    void createRedisSession() {
-        var redisSession = redisSessionRepository.createSession();
-        redisSessionRepository.save(redisSession);
-        this.initialRedisSession = redisSession;
-    }
+    private final RedisSessionManager redisSessionManager;
 
     @Nested
     @DisplayName("Sign In")
@@ -70,27 +60,29 @@ class AuthIntegrationTest extends BaseIntegrationTest {
         void credentialsCorrect_shouldAuthenticateAndCreateNewUserSession() throws Exception {
             var signInRequestDto = AuthTestData.getSignInRequestDto();
             var jsonRequest = JsonUtil.toJson(signInRequestDto);
-
-            var encodedInitialSessionId = getEncodedInitialSessionId();
-            var initialSessionKey = SESSION_KEYS_NAMESPACE + initialRedisSession.getId();
-            var initialSessionCookie = new Cookie(COOKIE_SESSION_NAME, encodedInitialSessionId);
+            var guestSession = redisSessionManager.createGuestSession();
+            var guestSessionInfo = redisSessionManager.getSessionInfo(guestSession);
 
             var mvcResult = mockMvc.perform(post(SIGN_IN_URL)
-                            .cookie(initialSessionCookie)
+                            .cookie(guestSessionInfo.cookie())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
                     .andExpectAll(
                             status().isOk(),
-                            cookie().value(COOKIE_SESSION_NAME, Matchers.not(encodedInitialSessionId))
+                            cookie().value(
+                                    RedisSessionManager.COOKIE_SESSION_NAME,
+                                    Matchers.not(guestSessionInfo.encodedId())
+                            )
                     )
                     .andReturn();
 
-            var newSessionKey = getNewSessionKey(mvcResult);
-            var username = getAuthenticatedUsername(newSessionKey);
+            var newSessionCookie = getNewSessionCookie(mvcResult);
+            var newSessionInfo = redisSessionManager.getSessionInfo(newSessionCookie);
+            var username = getAuthenticatedUsername(newSessionInfo.key());
 
             assertAll(
-                    () -> assertTrue(redisTemplate.hasKey(newSessionKey)),
-                    () -> assertFalse(redisTemplate.hasKey(initialSessionKey)),
+                    () -> assertTrue(redisTemplate.hasKey(newSessionInfo.key())),
+                    () -> assertFalse(redisTemplate.hasKey(guestSessionInfo.key())),
                     () -> assertEquals(signInRequestDto.getUsername(), username)
             );
         }
@@ -98,49 +90,43 @@ class AuthIntegrationTest extends BaseIntegrationTest {
         @Test
         @DisplayName("Incorrect password")
         void incorrectPassword_shouldReturnUnauthorized() throws Exception {
-            var signInRequestDto = AuthTestData.getIncorrectSignInRequestDto(
-                    SignInRequestDto.Fields.PASSWORD, "incorrectPassword"
+            var signInRequestDto = IncorrectTestDataUtil.getIncorrectDto(
+                    AuthTestData::getSignInRequestDto, SignInRequestDto.Fields.PASSWORD, "incorrectPassword"
             );
-
             var jsonRequest = JsonUtil.toJson(signInRequestDto);
 
-            var sessionCookie = new Cookie(COOKIE_SESSION_NAME, getEncodedInitialSessionId());
-
             mockMvc.perform(post(SIGN_IN_URL)
-                            .cookie(sessionCookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
                     .andExpectAll(
                             status().isUnauthorized(),
-                            cookie().doesNotExist(COOKIE_SESSION_NAME)
+                            cookie().doesNotExist(RedisSessionManager.COOKIE_SESSION_NAME)
                     );
         }
 
         @Test
         @DisplayName("User doesn't exist")
         void userDoesNotExist_shouldReturnUnauthorized() throws Exception {
-            var signInRequestDto = AuthTestData.getIncorrectSignInRequestDto(
-                    SignInRequestDto.Fields.USERNAME, "non_existent_user"
+            var signInRequestDto = IncorrectTestDataUtil.getIncorrectDto(
+                    AuthTestData::getSignInRequestDto, SignInRequestDto.Fields.USERNAME, "non_existent_user"
             );
-
             var jsonRequest = JsonUtil.toJson(signInRequestDto);
 
-            var sessionCookie = new Cookie(COOKIE_SESSION_NAME, getEncodedInitialSessionId());
-
             mockMvc.perform(post(SIGN_IN_URL)
-                            .cookie(sessionCookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
                     .andExpectAll(
                             status().isUnauthorized(),
-                            cookie().doesNotExist(COOKIE_SESSION_NAME)
+                            cookie().doesNotExist(RedisSessionManager.COOKIE_SESSION_NAME)
                     );
         }
 
         @ParameterizedTest(name = "{1}")
         @DisplayName("Invalid request parameters")
         @ArgumentsSource(InvalidSignInRequestDtoArgumentsProvider.class)
-        void invalidRequestParameter_shouldReturnBadRequest(SignInRequestDto signInRequestDto, String description) throws Exception {
+        void invalidRequestParameter_shouldReturnBadRequest(SignInRequestDto signInRequestDto,
+                                                            String description) throws Exception {
+
             var jsonRequest = JsonUtil.toJson(signInRequestDto);
 
             mockMvc.perform(post(SIGN_IN_URL)
@@ -148,31 +134,127 @@ class AuthIntegrationTest extends BaseIntegrationTest {
                             .content(jsonRequest))
                     .andExpectAll(
                             status().isBadRequest(),
-                            cookie().doesNotExist(COOKIE_SESSION_NAME)
+                            cookie().doesNotExist(RedisSessionManager.COOKIE_SESSION_NAME)
                     );
         }
     }
 
-    private String getEncodedInitialSessionId() {
-        var sessionIdBytes = initialRedisSession.getId().getBytes();
-        var encodedSessionIdBytes = Base64.encode(sessionIdBytes);
-        return new String(encodedSessionIdBytes);
+    @Nested
+    @DisplayName("Sign Up")
+    class SignUpIntegrationTest {
+
+        @Test
+        @DisplayName("User doesn't exist and credentials are correct")
+        void userDoesNotExistAndCredentialsCorrect_shouldRegisterAndCreateNewUserSession() throws Exception {
+            var signUpRequestDto = AuthTestData.getSignUpRequestDto();
+            var jsonRequest = JsonUtil.toJson(signUpRequestDto);
+            var guestSession = redisSessionManager.createGuestSession();
+            var guestSessionInfo = redisSessionManager.getSessionInfo(guestSession);
+
+            var mvcResult = mockMvc.perform(post(SIGN_UP_URL)
+                            .cookie(guestSessionInfo.cookie())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(jsonRequest))
+                    .andExpectAll(
+                            status().isCreated(),
+                            cookie().value(
+                                    RedisSessionManager.COOKIE_SESSION_NAME,
+                                    Matchers.not(guestSessionInfo.encodedId())
+                            )
+                    )
+                    .andReturn();
+
+            var newSessionCookie = getNewSessionCookie(mvcResult);
+            var newSessionInfo = redisSessionManager.getSessionInfo(newSessionCookie);
+            var username = getAuthenticatedUsername(newSessionInfo.key());
+            var userDetails = userService.loadUserByUsername(signUpRequestDto.getUsername());
+
+            assertAll(
+                    () -> assertTrue(redisTemplate.hasKey(newSessionInfo.key())),
+                    () -> assertFalse(redisTemplate.hasKey(guestSessionInfo.key())),
+                    () -> assertEquals(signUpRequestDto.getUsername(), username),
+                    () -> assertNotNull(userDetails)
+            );
+        }
+
+        @Test
+        @DisplayName("User already exists")
+        void userAlreadyExists_shouldReturnConflict() throws Exception {
+            var signUpRequestDto = IncorrectTestDataUtil.getIncorrectDto(
+                    AuthTestData::getSignUpRequestDto, SignInRequestDto.Fields.USERNAME, UserTestData.USERNAME
+            );
+            var jsonRequest = JsonUtil.toJson(signUpRequestDto);
+
+            mockMvc.perform(post(SIGN_UP_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(jsonRequest))
+                    .andExpectAll(
+                            status().isConflict(),
+                            cookie().doesNotExist(RedisSessionManager.COOKIE_SESSION_NAME)
+                    );
+        }
+
+        @ParameterizedTest(name = "{1}")
+        @DisplayName("Invalid request parameters")
+        @ArgumentsSource(InvalidSignUpRequestDtoArgumentsProvider.class)
+        void invalidRequestParameter_shouldReturnBadRequest(SignUpRequestDto signUpRequestDto,
+                                                            String description) throws Exception {
+
+            var jsonRequest = JsonUtil.toJson(signUpRequestDto);
+
+            mockMvc.perform(post(SIGN_UP_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(jsonRequest))
+                    .andExpectAll(
+                            status().isBadRequest(),
+                            cookie().doesNotExist(RedisSessionManager.COOKIE_SESSION_NAME)
+                    );
+        }
     }
 
-    private String getNewSessionKey(MvcResult mvcResult) {
-        var response = mvcResult.getResponse();
+    @Nested
+    @DisplayName("Sign Out")
+    class SignOutIntegrationTest {
 
-        var sessionCookie = response.getCookie(COOKIE_SESSION_NAME);
+        @Test
+        @DisplayName("User authorized")
+        void userAuthorized_shouldSignOutUser() throws Exception {
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
-        var encodedSessionId = Objects.requireNonNull(sessionCookie).getValue();
-        var sessionId = new String(Base64.decode(encodedSessionId));
+            mockMvc.perform(post(SIGN_OUT_URL)
+                            .cookie(authSessionInfo.cookie()))
+                    .andExpectAll(
+                            status().isNoContent(),
+                            cookie().value(
+                                    RedisSessionManager.COOKIE_SESSION_NAME,
+                                    Matchers.emptyString()
+                            )
+                    );
 
-        return SESSION_KEYS_NAMESPACE + sessionId;
+            assertFalse(redisTemplate.hasKey(authSessionInfo.key()));
+        }
+
+        @Test
+        @DisplayName("User unauthorized")
+        void userUnauthorized_shouldReturnUnauthorized() throws Exception {
+            var guestSession = redisSessionManager.createGuestSession();
+            var guestSessionInfo = redisSessionManager.getSessionInfo(guestSession);
+
+            mockMvc.perform(post(SIGN_OUT_URL)
+                            .cookie(guestSessionInfo.cookie()))
+                    .andExpect(status().isUnauthorized());
+        }
+    }
+
+    private Cookie getNewSessionCookie(MvcResult mvcResult) {
+        return mvcResult.getResponse()
+                .getCookie(RedisSessionManager.COOKIE_SESSION_NAME);
     }
 
     private String getAuthenticatedUsername(String sessionKey) {
         var securityContext = (SecurityContext) redisTemplate.opsForHash()
-                .get(sessionKey, SESSION_SECURITY_CONTEXT_ATTRIBUTE);
+                .get(sessionKey, RedisSessionManager.SESSION_SECURITY_CONTEXT_ATTRIBUTE);
 
         var authentication = securityContext.getAuthentication();
 
