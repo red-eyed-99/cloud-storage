@@ -2,7 +2,7 @@ package ru.redeyed.cloudstorage.auth;
 
 import org.mapstruct.Mapper;
 import ru.redeyed.cloudstorage.auth.dto.SignUpRequestDto;
-import ru.redeyed.cloudstorage.user.CreateUserDto;
+import ru.redeyed.cloudstorage.user.dto.CreateUserDto;
 
 @Mapper
 public interface AuthUserMapper {
