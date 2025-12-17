@@ -5,8 +5,8 @@
 CREATE TABLE users
 (
     id       UUID PRIMARY KEY DEFAULT UUID_GENERATE_V4(),
-    username VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL
+    username VARCHAR(20) NOT NULL UNIQUE,
+    password VARCHAR(60) NOT NULL
 
     CONSTRAINT check_username CHECK (
         username ~ '^[a-zA-Z0-9]+[a-zA-Z_0-9]*[a-zA-Z0-9]+$' AND
