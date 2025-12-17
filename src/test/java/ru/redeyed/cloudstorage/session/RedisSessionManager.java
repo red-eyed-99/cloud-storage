@@ -54,7 +54,7 @@ public class RedisSessionManager {
         var securityContext = SecurityContextHolder.createEmptyContext();
 
         var authentication = UsernamePasswordAuthenticationToken.authenticated(
-                new UserDetailsImpl(UserTestData.USERNAME, null), null, List.of()
+                new UserDetailsImpl(UserTestData.ID, UserTestData.USERNAME, null), null, List.of()
         );
 
         securityContext.setAuthentication(authentication);

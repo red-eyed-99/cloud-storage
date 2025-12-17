@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ru.redeyed.cloudstorage.user.dto.CreateUserDto;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +25,7 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> UsernameNotFoundException.fromUsername(username));
     }
 
-    public void create(CreateUserDto createUserDto) {
+    public UUID create(CreateUserDto createUserDto) {
         var user = userMapper.toUser(createUserDto);
 
         try {
@@ -32,5 +33,7 @@ public class UserService implements UserDetailsService {
         } catch (DataIntegrityViolationException exception) {
             throw new UserAlreadyExistsException();
         }
+
+        return user.getId();
     }
 }

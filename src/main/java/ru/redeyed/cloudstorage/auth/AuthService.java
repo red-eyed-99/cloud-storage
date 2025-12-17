@@ -11,6 +11,7 @@ import ru.redeyed.cloudstorage.auth.dto.SignUpRequestDto;
 import ru.redeyed.cloudstorage.user.UserService;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -41,14 +42,14 @@ public class AuthService {
 
         var createUserDto = authUserMapper.toCreateUserDto(signUpRequestDto);
 
-        userService.create(createUserDto);
+        var userId = userService.create(createUserDto);
 
-        return getAuthenticatedToken(signUpRequestDto);
+        return getAuthenticatedToken(signUpRequestDto, userId);
     }
 
-    private UsernamePasswordAuthenticationToken getAuthenticatedToken(SignUpRequestDto signUpRequestDto) {
+    private UsernamePasswordAuthenticationToken getAuthenticatedToken(SignUpRequestDto signUpRequestDto, UUID userId) {
         var username = signUpRequestDto.getUsername();
-        var userDetails = new UserDetailsImpl(username, null);
+        var userDetails = new UserDetailsImpl(userId, username, null);
 
         return UsernamePasswordAuthenticationToken
                 .authenticated(username, null, List.of())
