@@ -1,52 +1,27 @@
 package ru.redeyed.cloudstorage.common.validation.validator;
 
-import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import ru.redeyed.cloudstorage.common.validation.annotation.ValidUsername;
 import java.util.regex.Pattern;
 
-public class UsernameValidator implements ConstraintValidator<ValidUsername, String> {
+public class UsernameValidator extends BaseConstraintValidator<ValidUsername, String> {
 
-    private int minLength;
+    private static final int MIN_LENGTH = 5;
+    private static final int MAX_LENGTH = 20;
 
-    private int maxLength;
-
-    private Pattern pattern;
-
-    private String message;
+    private static final Pattern PATTERN = Pattern.compile("^[a-zA-Z0-9]+[a-zA-Z_0-9]*[a-zA-Z0-9]+$");
 
     @Override
     public void initialize(ValidUsername constraintAnnotation) {
-        minLength = constraintAnnotation.minLength();
-        maxLength = constraintAnnotation.maxLength();
-        pattern = Pattern.compile(constraintAnnotation.pattern());
+        parameterName = constraintAnnotation.parameterName();
         message = constraintAnnotation.message();
     }
 
     @Override
     public boolean isValid(String username, ConstraintValidatorContext context) {
-        if (username == null || username.isBlank()) {
-            setCustomMessage(context, "Username must not be null or empty.");
-            return false;
-        }
-
-        if (username.length() < minLength || username.length() > maxLength) {
-            var message = "Username length must be between %d and %d characters.";
-            setCustomMessage(context, message.formatted(minLength, maxLength));
-            return false;
-        }
-
-        if (!pattern.matcher(username).matches()) {
-            setCustomMessage(context, message);
-            return false;
-        }
-
-        return true;
-    }
-
-    private void setCustomMessage(ConstraintValidatorContext context, String message) {
-        context.disableDefaultConstraintViolation();
-        context.buildConstraintViolationWithTemplate(message)
-                .addConstraintViolation();
+        return checkNotBlank(context, username)
+                && checkLengthBetween(context, username, MIN_LENGTH, MAX_LENGTH)
+                && checkNotStartOrEndWith(context, username, "_")
+                && patternMatches(context, username, PATTERN);
     }
 }

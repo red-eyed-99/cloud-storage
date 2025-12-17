@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import ru.redeyed.cloudstorage.common.validation.annotation.PasswordBcryptEncoded;
+import ru.redeyed.cloudstorage.common.validation.annotation.BcryptEncoded;
 import ru.redeyed.cloudstorage.common.validation.annotation.ValidUsername;
 import java.util.UUID;
 
@@ -29,6 +29,6 @@ public class User {
     @ValidUsername
     private String username;
 
-    @PasswordBcryptEncoded
+    @BcryptEncoded(parameterName = "password")
     private String password;
 }

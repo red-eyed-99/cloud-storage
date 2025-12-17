@@ -13,16 +13,9 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = UsernameValidator.class)
 public @interface ValidUsername {
 
-    String message() default """
-            Incorrect username. Only latin letters, digits and underscores are allowed.
-            And the username must not begin or end with an underscore.
-            """;
+    String parameterName() default "username";
 
-    int minLength() default 5;
-
-    int maxLength() default 20;
-
-    String pattern() default "^[a-zA-Z0-9]+[a-zA-Z_0-9]*[a-zA-Z0-9]+$";
+    String message() default "Incorrect username. Only latin letters, digits and underscores are allowed.";
 
     Class<?>[] groups() default {};
 

@@ -13,13 +13,9 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = PasswordValidator.class)
 public @interface ValidPassword {
 
+    String parameterName() default "password";
+
     String message() default "Incorrect password. Allowed characters: a-zA-Z0-9!@#$%^&*(),.?\":{}|<>[]/`~+=-_';";
-
-    int minLength() default 5;
-
-    int maxLength() default 20;
-
-    String pattern() default "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>\\[\\]\\/`~+=\\-_';]+$";
 
     Class<?>[] groups() default {};
 
