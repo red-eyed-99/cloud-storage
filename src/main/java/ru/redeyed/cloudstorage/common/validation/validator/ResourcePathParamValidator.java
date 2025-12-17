@@ -31,6 +31,10 @@ public class ResourcePathParamValidator extends BaseConstraintValidator<ValidRes
 
     @Override
     public boolean isValid(String path, ConstraintValidatorContext context) {
+        if (onlyDirectory && ResourceUtil.isRootDirectory(path)) {
+            return true;
+        }
+
         var resourceName = ResourceUtil.extractResourceName(path);
 
         return checkNotBlank(context, path)
