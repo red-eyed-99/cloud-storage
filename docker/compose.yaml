@@ -25,6 +25,21 @@ services:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
     command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
 
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z-cpuv1
+    container_name: minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - cloud-storage-network
+    env_file:
+      - .env
+    volumes:
+      - minio-data:/data
+    command: ["server", "/data", "--console-address", ":9001"]
+
 networks:
   cloud-storage-network:
     driver: bridge
@@ -32,3 +47,4 @@ networks:
 volumes:
   postgres-data:
   redis-data:
+  minio-data:
