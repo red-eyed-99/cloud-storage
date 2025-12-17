@@ -2,4 +2,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/extensions/1-create-extension-uuid-ossp.sql
   - include:
+      file: db/changelog/types/1-create-enum-resource-type.sql
+  - include:
       file: db/changelog/tables/users/1-create-table-users.sql
+  - include:
+      file: db/changelog/tables/resources/1-create-table-resources.sql
