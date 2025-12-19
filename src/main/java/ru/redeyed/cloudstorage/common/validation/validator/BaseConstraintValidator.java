@@ -43,7 +43,7 @@ public abstract class BaseConstraintValidator<A extends Annotation, T> implement
 
     protected boolean checkNotStartWith(String value, String prefix, ConstraintValidatorContext context) {
         if (ConstraintValidationUtil.isStartWith(prefix, value)) {
-            setCustomMessage(context, ConstraintValidationUtil.getNotStartWithMessage(parameterName, value));
+            setCustomMessage(context, ConstraintValidationUtil.getNotStartWithMessage(parameterName, prefix));
             return false;
         }
 
