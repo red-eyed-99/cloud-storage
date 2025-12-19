@@ -1,9 +1,9 @@
-package ru.redeyed.cloudstorage.resource;
+package ru.redeyed.cloudstorage.common.util;
 
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-public class ResourceUtil {
+public class PathUtil {
 
     public static final String PATH_DELIMITER = "/";
 
@@ -25,7 +25,7 @@ public class ResourceUtil {
         return path.equals(PATH_DELIMITER);
     }
 
-    private static boolean isDirectory(String path) {
+    public static boolean isDirectory(String path) {
         return path.endsWith(PATH_DELIMITER);
     }
 
