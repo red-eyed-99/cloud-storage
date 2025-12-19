@@ -17,6 +17,8 @@ public @interface ValidResourcePath {
 
     String message() default "Invalid resource path. Prohibited characters: \\:*?\"<>|.";
 
+    boolean onlyDirectory() default false;
+
     Class<?>[] groups() default {};
 
     Class<? extends Payload>[] payload() default {};

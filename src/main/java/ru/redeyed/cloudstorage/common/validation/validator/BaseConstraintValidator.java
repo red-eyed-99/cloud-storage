@@ -32,18 +32,9 @@ public abstract class BaseConstraintValidator<A extends Annotation, T> implement
         return true;
     }
 
-    protected boolean checkMaxLength(ConstraintValidatorContext context, String value, int maxLength) {
-        if (!ConstraintValidationUtil.checkMaxLength(value, maxLength)) {
-            setCustomMessage(context, ConstraintValidationUtil.getMaxLengthMessage(parameterName, maxLength));
-            return false;
-        }
-
-        return true;
-    }
-
-    protected boolean checkNotStartWith(ConstraintValidatorContext context, String value, String prefix, String message) {
-        if (ConstraintValidationUtil.isStartWith(prefix, value)) {
-            setCustomMessage(context, message);
+    protected boolean checkMaxBytes(ConstraintValidatorContext context, String value, int maxLength) {
+        if (!ConstraintValidationUtil.checkMaxBytes(value, maxLength)) {
+            setCustomMessage(context, ConstraintValidationUtil.getMaxBytesMessage(parameterName, maxLength));
             return false;
         }
 

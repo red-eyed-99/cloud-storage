@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.redeyed.cloudstorage.auth.UserDetailsImpl;
-import ru.redeyed.cloudstorage.common.validation.annotation.ValidResourcePathParam;
+import ru.redeyed.cloudstorage.common.validation.annotation.ValidResourcePath;
 
 @RestController
 @RequestMapping("/api")
@@ -22,7 +22,7 @@ public class ResourceController {
 
     @GetMapping("/resource")
     public ResponseEntity<ResourceResponseDto> getResource(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                           @RequestParam @ValidResourcePathParam String path) {
+                                                           @RequestParam @ValidResourcePath String path) {
 
         var resourceResponseDto = resourceService.getResource(userDetails.getId(), path);
         return ResponseEntity.ok(resourceResponseDto);
@@ -30,7 +30,7 @@ public class ResourceController {
 
     @DeleteMapping("/resource")
     public ResponseEntity<Void> deleteResource(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                               @RequestParam @ValidResourcePathParam String path) {
+                                               @RequestParam @ValidResourcePath String path) {
 
         resourceService.deleteResource(userDetails.getId(), path);
         return ResponseEntity.noContent().build();
@@ -38,7 +38,7 @@ public class ResourceController {
 
     @PostMapping("/directory")
     public ResponseEntity<ResourceResponseDto> createDirectory(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                               @RequestParam @ValidResourcePathParam(onlyDirectory = true)
+                                                               @RequestParam @ValidResourcePath(onlyDirectory = true)
                                                                String path) {
 
         var resourceResponseDto = resourceService.createDirectory(userDetails.getId(), path);
