@@ -4,6 +4,7 @@ spring-boot = "4.0.0"
 spring-dependency-management = "1.1.7"
 
 postgresql = "42.7.8"
+minio = "8.6.0"
 
 lombok = "1.18.42"
 mapstruct = "1.6.3"
@@ -38,6 +39,7 @@ testcontainers-redis = { group = "com.redis", name = "testcontainers-redis", ver
 spring-session-data-redis = { group = "org.springframework.session", name = "spring-session-data-redis", version.ref = "spring-boot" }
 
 postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
+minio = { group = "io.minio", name = "minio", version.ref = "minio" }
 
 lombok = { group = "org.projectlombok", name = "lombok", version.ref = "lombok" }
 

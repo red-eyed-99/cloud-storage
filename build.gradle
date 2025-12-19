@@ -29,6 +29,7 @@ dependencies {
     implementation(
             libs.bundles.spring.boot.starters,
             libs.spring.session.data.redis,
+            libs.minio,
             libs.lombok.mapstruct.binding
     )
 
