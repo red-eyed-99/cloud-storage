@@ -36,6 +36,15 @@ public class ResourceController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/directory")
+    public ResponseEntity<List<ResourceResponseDto>> getDirectoryContent(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                                         @RequestParam(defaultValue = PathUtil.PATH_DELIMITER)
+                                                                         @ValidResourcePath(onlyDirectory = true) String path) {
+
+        var resourceResponseDtos = resourceService.getDirectoryContent(userDetails.getId(), path);
+        return ResponseEntity.ok(resourceResponseDtos);
+    }
+
     @PostMapping("/directory")
     public ResponseEntity<ResourceResponseDto> createDirectory(@AuthenticationPrincipal UserDetailsImpl userDetails,
                                                                @RequestParam @ValidResourcePath(onlyDirectory = true)

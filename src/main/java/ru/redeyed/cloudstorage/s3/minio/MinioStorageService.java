@@ -20,6 +20,7 @@ import ru.redeyed.cloudstorage.s3.SimpleStorageService;
 import ru.redeyed.cloudstorage.s3.StorageObjectInfo;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -48,6 +49,31 @@ public class MinioStorageService implements SimpleStorageService {
         }
 
         removeFile(bucketName, path);
+    }
+
+    @Override
+    @SneakyThrows
+    public List<StorageObjectInfo> getDirectoryObjectsInfo(BucketName bucketName, String path) {
+        var storageObjectInfos = new ArrayList<StorageObjectInfo>();
+
+        var resultItems = minioClient.listObjects(ListObjectsArgs.builder()
+                .bucket(bucketName.getValue())
+                .prefix(path)
+                .build());
+
+        for (var resultItem : resultItems) {
+            var item = resultItem.get();
+
+            if (item.objectName().equals(path)) {
+                continue;
+            }
+
+            var storageObjectInfo = minioObjectMapper.toStorageObjectInfo(item);
+
+            storageObjectInfos.add(storageObjectInfo);
+        }
+
+        return storageObjectInfos;
     }
 
     @Override

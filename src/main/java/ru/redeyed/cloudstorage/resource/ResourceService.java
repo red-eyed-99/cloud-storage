@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.s3.BucketName;
 import ru.redeyed.cloudstorage.s3.SimpleStorageService;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -27,6 +28,18 @@ public class ResourceService {
     public void deleteResource(UUID userId, String path) {
         var resourcePath = ResourcePathUtil.createUserResourcePath(userId, path);
         storageService.deleteObject(BucketName.USER_FILES, resourcePath);
+    }
+
+    public List<ResourceResponseDto> getDirectoryContent(UUID userId, String path) {
+        var resourcePath = ResourcePathUtil.createUserResourcePath(userId, path);
+
+        if (!storageService.objectExists(BucketName.USER_FILES, resourcePath)) {
+            throw new ResourceNotFoundException("Directory does not exist");
+        }
+
+        var storageObjectInfos = storageService.getDirectoryObjectsInfo(BucketName.USER_FILES, resourcePath);
+
+        return resourceMapper.toResourceResponseDtos(storageObjectInfos);
     }
 
     public ResourceResponseDto createDirectory(UUID userId, String path) {

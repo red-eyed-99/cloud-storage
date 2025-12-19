@@ -4,6 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import ru.redeyed.cloudstorage.s3.StorageObjectInfo;
+import java.util.List;
 
 @Mapper
 public abstract class ResourceMapper {
@@ -12,6 +13,8 @@ public abstract class ResourceMapper {
     @Mapping(target = "size", source = "objectInfo", qualifiedByName = "getSize")
     @Mapping(target = "type", source = "objectInfo", qualifiedByName = "getType")
     public abstract ResourceResponseDto toResourceResponseDto(StorageObjectInfo objectInfo);
+
+    public abstract List<ResourceResponseDto> toResourceResponseDtos(List<StorageObjectInfo> objectInfos);
 
     @Named("getPath")
     protected String getPath(StorageObjectInfo objectInfo) {
