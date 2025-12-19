@@ -84,4 +84,10 @@ public class PathUtil {
 
         return path.substring(beginIndex, endIndex);
     }
+
+    public static String trimLastSlash(String path) {
+        var beginIndex = 0;
+        var endIndex = path.length() - 1;
+        return path.substring(beginIndex, endIndex);
+    }
 }

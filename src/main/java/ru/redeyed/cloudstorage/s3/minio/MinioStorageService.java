@@ -91,7 +91,7 @@ public class MinioStorageService implements SimpleStorageService {
     }
 
     private Optional<StorageObjectInfo> findDirectoryInfo(BucketName bucketName, String path) {
-        path = trimLastSlash(path);
+        path = PathUtil.trimLastSlash(path);
 
         var directoryName = PathUtil.extractResourceName(path);
 
@@ -158,11 +158,5 @@ public class MinioStorageService implements SimpleStorageService {
             var deleteError = resultDeleteError.get();
             log.error("Error while deleting {} - {}", deleteError.objectName(), deleteError.message());
         }
-    }
-
-    private String trimLastSlash(String path) {
-        var beginIndex = 0;
-        var endIndex = path.length() - 1;
-        return path.substring(beginIndex, endIndex);
     }
 }
