@@ -1,5 +1,6 @@
 package ru.redeyed.cloudstorage.s3.minio;
 
+import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -15,13 +16,17 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
+import ru.redeyed.cloudstorage.resource.ResourcePathUtil;
 import ru.redeyed.cloudstorage.s3.BucketName;
 import ru.redeyed.cloudstorage.s3.SimpleStorageService;
 import ru.redeyed.cloudstorage.s3.StorageObjectInfo;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Component
 @RequiredArgsConstructor
@@ -33,22 +38,40 @@ public class MinioStorageService implements SimpleStorageService {
     private final MinioObjectMapper minioObjectMapper;
 
     @Override
-    public Optional<StorageObjectInfo> findObjectInfo(BucketName bucketName, String path) {
-        if (PathUtil.isDirectory(path)) {
-            return findDirectoryInfo(bucketName, path);
-        }
+    @SneakyThrows
+    public Optional<StorageObjectInfo> findFileInfo(BucketName bucketName, String path) {
+        try {
+            var statObjectResponse = minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(bucketName.getValue())
+                    .object(path)
+                    .build());
 
-        return findFileInfo(bucketName, path);
+            return Optional.of(minioObjectMapper.toStorageObjectInfo(statObjectResponse));
+
+        } catch (ErrorResponseException exception) {
+            var code = exception.errorResponse().code();
+
+            if (code.equals(MinioStatusCode.NO_SUCH_KEY.getValue())) {
+                return Optional.empty();
+            }
+
+            throw exception;
+        }
     }
 
     @Override
-    public void deleteObject(BucketName bucketName, String path) {
-        if (PathUtil.isDirectory(path)) {
-            removeDirectory(bucketName, path);
-            return;
-        }
+    public Optional<StorageObjectInfo> findDirectoryInfo(BucketName bucketName, String path) {
+        path = PathUtil.trimLastSlash(path);
 
-        removeFile(bucketName, path);
+        var directoryName = PathUtil.extractResourceName(path);
+
+        var resultItems = minioClient.listObjects(ListObjectsArgs.builder()
+                .bucket(bucketName.getValue())
+                .prefix(path)
+                .build());
+
+        return findItem(resultItems, directoryName, true)
+                .map(minioObjectMapper::toStorageObjectInfo);
     }
 
     @Override
@@ -87,81 +110,60 @@ public class MinioStorageService implements SimpleStorageService {
     }
 
     @Override
-    public boolean objectExists(BucketName bucketName, String path) {
-        if (PathUtil.isDirectory(path)) {
-            return findDirectoryInfo(bucketName, path).isPresent();
-        }
-
-        return findFileInfo(bucketName, path).isPresent();
-    }
-
     @SneakyThrows
-    private Optional<StorageObjectInfo> findFileInfo(BucketName bucketName, String path) {
-        try {
-            var statObjectResponse = minioClient.statObject(StatObjectArgs.builder()
-                    .bucket(bucketName.getValue())
-                    .object(path)
-                    .build());
-
-            return Optional.of(minioObjectMapper.toStorageObjectInfo(statObjectResponse));
-
-        } catch (ErrorResponseException exception) {
-            var code = exception.errorResponse().code();
-
-            if (code.equals(MinioStatusCode.NO_SUCH_KEY.getValue())) {
-                return Optional.empty();
-            }
-
-            throw exception;
-        }
+    public InputStream downloadFile(BucketName bucketName, String path) {
+        return minioClient.getObject(
+                GetObjectArgs.builder()
+                        .bucket(bucketName.getValue())
+                        .object(path)
+                        .build());
     }
 
-    private Optional<StorageObjectInfo> findDirectoryInfo(BucketName bucketName, String path) {
-        path = PathUtil.trimLastSlash(path);
-
-        var directoryName = PathUtil.extractResourceName(path);
-
-        var resultItems = minioClient.listObjects(ListObjectsArgs.builder()
+    @Override
+    @SneakyThrows
+    public void downloadDirectory(BucketName bucketName, String path, ZipOutputStream zipOutputStream) {
+        var resultItemsToDownload = minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucketName.getValue())
                 .prefix(path)
+                .recursive(true)
                 .build());
 
-        return findItem(resultItems, directoryName, true)
-                .map(minioObjectMapper::toStorageObjectInfo);
-    }
-
-    @SneakyThrows
-    private Optional<Item> findItem(Iterable<Result<Item>> resultItems, String resourceName, boolean isDirectory) {
-        for (var resultItem : resultItems) {
+        for (var resultItem : resultItemsToDownload) {
             var item = resultItem.get();
-            var itemResourceName = PathUtil.extractResourceName(item.objectName());
 
-            if (!itemResourceName.equals(resourceName)) {
-                continue;
+            var entryName = ResourcePathUtil.removeUserFolder(item.objectName());
+
+            var zipEntry = item.isDir()
+                    ? new ZipEntry(entryName + PathUtil.PATH_DELIMITER)
+                    : new ZipEntry(entryName);
+
+            zipOutputStream.putNextEntry(zipEntry);
+
+            try (var inputStream = minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(BucketName.USER_FILES.getValue())
+                            .object(item.objectName())
+                            .build())
+            ) {
+                inputStream.transferTo(zipOutputStream);
             }
 
-            if (item.isDir() && isDirectory) {
-                return Optional.of(item);
-            }
-
-            if (!item.isDir() && !isDirectory) {
-                return Optional.of(item);
-            }
+            zipOutputStream.closeEntry();
         }
-
-        return Optional.empty();
     }
 
+    @Override
     @SneakyThrows
-    private void removeFile(BucketName bucketName, String path) {
+    public void removeFile(BucketName bucketName, String path) {
         minioClient.removeObject(RemoveObjectArgs.builder()
                 .bucket(bucketName.getValue())
                 .object(path)
                 .build());
     }
 
+    @Override
     @SneakyThrows
-    private void removeDirectory(BucketName bucketName, String path) {
+    public void removeDirectory(BucketName bucketName, String path) {
         var deleteObjects = new ArrayList<DeleteObject>();
 
         var resultItemsToDelete = minioClient.listObjects(ListObjectsArgs.builder()
@@ -184,5 +186,37 @@ public class MinioStorageService implements SimpleStorageService {
             var deleteError = resultDeleteError.get();
             log.error("Error while deleting {} - {}", deleteError.objectName(), deleteError.message());
         }
+    }
+
+    @Override
+    public boolean fileExists(BucketName bucketName, String path) {
+        return findFileInfo(bucketName, path).isPresent();
+    }
+
+    @Override
+    public boolean directoryExists(BucketName bucketName, String path) {
+        return findDirectoryInfo(bucketName, path).isPresent();
+    }
+
+    @SneakyThrows
+    private Optional<Item> findItem(Iterable<Result<Item>> resultItems, String resourceName, boolean isDirectory) {
+        for (var resultItem : resultItems) {
+            var item = resultItem.get();
+            var itemResourceName = PathUtil.extractResourceName(item.objectName());
+
+            if (!itemResourceName.equals(resourceName)) {
+                continue;
+            }
+
+            if (item.isDir() && isDirectory) {
+                return Optional.of(item);
+            }
+
+            if (!item.isDir() && !isDirectory) {
+                return Optional.of(item);
+            }
+        }
+
+        return Optional.empty();
     }
 }

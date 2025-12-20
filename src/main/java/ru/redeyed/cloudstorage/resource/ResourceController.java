@@ -1,7 +1,10 @@
 package ru.redeyed.cloudstorage.resource;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -10,8 +13,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.redeyed.cloudstorage.auth.UserDetailsImpl;
+import ru.redeyed.cloudstorage.common.ContentDispositionType;
+import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.common.validation.annotation.ValidResourcePath;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -28,6 +35,27 @@ public class ResourceController {
         return ResponseEntity.ok(resourceResponseDto);
     }
 
+    @GetMapping("/resource/download")
+    public ResponseEntity<StreamingResponseBody> downloadResource(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                                  @RequestParam @ValidResourcePath String path) {
+
+        var streamingResponseBody = resourceService.downloadResource(userDetails.getId(), path);
+
+        var contentDispositionType = ContentDispositionType.ATTACHMENT.getValue();
+
+        var contentDisposition = ContentDisposition.builder(contentDispositionType)
+                .filename(PathUtil.extractResourceName(path))
+                .build();
+
+        var headers = new HttpHeaders();
+
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(contentDisposition);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(streamingResponseBody);
+    }
     @DeleteMapping("/resource")
     public ResponseEntity<Void> deleteResource(@AuthenticationPrincipal UserDetailsImpl userDetails,
                                                @RequestParam @ValidResourcePath String path) {
