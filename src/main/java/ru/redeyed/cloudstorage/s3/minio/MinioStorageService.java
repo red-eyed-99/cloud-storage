@@ -1,5 +1,7 @@
 package ru.redeyed.cloudstorage.s3.minio;
 
+import io.minio.CopyObjectArgs;
+import io.minio.CopySource;
 import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
@@ -76,12 +78,13 @@ public class MinioStorageService implements SimpleStorageService {
 
     @Override
     @SneakyThrows
-    public List<StorageObjectInfo> getDirectoryObjectsInfo(BucketName bucketName, String path) {
+    public List<StorageObjectInfo> getDirectoryObjectsInfo(BucketName bucketName, String path, boolean recursive) {
         var storageObjectInfos = new ArrayList<StorageObjectInfo>();
 
         var resultItems = minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucketName.getValue())
                 .prefix(path)
+                .recursive(recursive)
                 .build());
 
         for (var resultItem : resultItems) {
@@ -196,6 +199,45 @@ public class MinioStorageService implements SimpleStorageService {
     @Override
     public boolean directoryExists(BucketName bucketName, String path) {
         return findDirectoryInfo(bucketName, path).isPresent();
+    }
+
+    @Override
+    @SneakyThrows
+    public void moveFile(BucketName bucketName, String oldPath, String newPath) {
+        minioClient.copyObject(CopyObjectArgs.builder()
+                .bucket(bucketName.getValue())
+                .object(newPath)
+                .source(CopySource.builder()
+                        .bucket(bucketName.getValue())
+                        .object(oldPath)
+                        .build())
+                .build());
+
+        removeFile(bucketName, oldPath);
+    }
+
+    @Override
+    @SneakyThrows
+    public void moveDirectory(BucketName bucketName, String oldPath, String newPath) {
+        var directoryName = PathUtil.extractResourceName(oldPath);
+
+        var directoryObjectsInfo = getDirectoryObjectsInfo(bucketName, oldPath, true);
+
+        for (var objectInfo : directoryObjectsInfo) {
+            var pathFromDirectory = PathUtil.extractPathFrom(directoryName, objectInfo.path());
+            var pathWithoutParentDirectory = PathUtil.removeParentDirectory(pathFromDirectory);
+
+            minioClient.copyObject(CopyObjectArgs.builder()
+                    .bucket(bucketName.getValue())
+                    .object(newPath + pathWithoutParentDirectory)
+                    .source(CopySource.builder()
+                            .bucket(bucketName.getValue())
+                            .object(objectInfo.path())
+                            .build())
+                    .build());
+        }
+
+        removeDirectory(bucketName, oldPath);
     }
 
     @SneakyThrows

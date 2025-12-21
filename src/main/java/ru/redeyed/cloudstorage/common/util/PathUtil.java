@@ -9,6 +9,11 @@ public class PathUtil {
 
     private static final int CHARACTER_NOT_PRESENT = -1;
 
+    public static String extractPathFrom(String value, String path) {
+        var startIndex = path.indexOf(value);
+        return path.substring(startIndex);
+    }
+
     public static String extractResourceName(String path) {
         return isDirectory(path)
                 ? extractDirectoryName(path)
@@ -19,6 +24,11 @@ public class PathUtil {
         return isDirectory(path)
                 ? removeDirectoryName(path)
                 : removeFileName(path);
+    }
+
+    public static String removeParentDirectory(String path) {
+        var parentDirectoryEndIndex = path.indexOf(PATH_DELIMITER);
+        return path.substring(parentDirectoryEndIndex + PATH_DELIMITER.length());
     }
 
     public static boolean isRootDirectory(String path) {

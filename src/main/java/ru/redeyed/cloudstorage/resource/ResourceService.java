@@ -111,4 +111,47 @@ public class ResourceService {
             }
         };
     }
+
+    public ResourceResponseDto moveResource(UUID userId, String fromPath, String toPath) {
+        var fromResourcePath = ResourcePathUtil.createUserResourcePath(userId, fromPath);
+        var toResourcePath = ResourcePathUtil.createUserResourcePath(userId, toPath);
+
+        if (PathUtil.isDirectory(fromPath)) {
+            return moveDirectory(fromResourcePath, toResourcePath);
+        }
+
+        return moveFile(fromResourcePath, toResourcePath);
+    }
+
+    private ResourceResponseDto moveDirectory(String fromPath, String toPath) {
+        storageService.findDirectoryInfo(BucketName.USER_FILES, fromPath)
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.DIRECTORY));
+
+        if (storageService.directoryExists(BucketName.USER_FILES, toPath)) {
+            throw new ResourceAlreadyExistsException(ResourceType.DIRECTORY);
+        }
+
+        storageService.moveDirectory(BucketName.USER_FILES, fromPath, toPath);
+
+        var directoryPath = ResourcePathUtil.removeUserFolder(toPath);
+        var directoryName = PathUtil.extractResourceName(toPath);
+
+        return new ResourceResponseDto(directoryPath, directoryName, null, ResourceType.DIRECTORY);
+    }
+
+    private ResourceResponseDto moveFile(String fromPath, String toPath) {
+        var fileInfo = storageService.findFileInfo(BucketName.USER_FILES, fromPath)
+                .orElseThrow(() -> new ResourceNotFoundException(ResourceType.FILE));
+
+        if (storageService.fileExists(BucketName.USER_FILES, toPath)) {
+            throw new ResourceAlreadyExistsException(ResourceType.FILE);
+        }
+
+        storageService.moveFile(BucketName.USER_FILES, fromPath, toPath);
+
+        var filePath = ResourcePathUtil.removeUserFolder(toPath);
+        var fileName = PathUtil.extractResourceName(toPath);
+
+        return new ResourceResponseDto(filePath, fileName, fileInfo.size(), ResourceType.FILE);
+    }
 }

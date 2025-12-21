@@ -56,6 +56,14 @@ public class ResourceController {
                 .headers(headers)
                 .body(streamingResponseBody);
     }
+
+    @GetMapping("/resource/move")
+    public ResponseEntity<ResourceResponseDto> moveResource(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                            @RequestParam @ValidResourcePath String from,
+                                                            @RequestParam @ValidResourcePath String to) {
+
+        return ResponseEntity.ok(resourceService.moveResource(userDetails.getId(), from, to));
+    }
     @DeleteMapping("/resource")
     public ResponseEntity<Void> deleteResource(@AuthenticationPrincipal UserDetailsImpl userDetails,
                                                @RequestParam @ValidResourcePath String path) {

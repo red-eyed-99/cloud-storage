@@ -11,13 +11,17 @@ public interface SimpleStorageService {
 
     Optional<StorageObjectInfo> findDirectoryInfo(BucketName bucketName, String path);
 
-    List<StorageObjectInfo> getDirectoryObjectsInfo(BucketName bucketName, String path);
+    List<StorageObjectInfo> getDirectoryObjectsInfo(BucketName bucketName, String path, boolean recursive);
 
     void createDirectory(BucketName bucketName, String path);
 
     InputStream downloadFile(BucketName bucketName, String path);
 
     void downloadDirectory(BucketName bucketName, String path, ZipOutputStream zipOutputStream);
+
+    void moveFile(BucketName bucketName, String oldPath, String newPath);
+
+    void moveDirectory(BucketName bucketName, String oldPath, String newPath);
 
     void removeFile(BucketName bucketName, String path);
 
