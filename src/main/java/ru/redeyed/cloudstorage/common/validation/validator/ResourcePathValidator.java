@@ -7,10 +7,10 @@ import java.util.regex.Pattern;
 
 public class ResourcePathValidator extends BaseConstraintValidator<ValidResourcePath, String> {
 
-    private static final int PATH_MAX_BYTES = 900;
+    public static final int RESOURCE_NAME_MAX_LENGTH = 200;
+    public static final int RESOURCE_NAME_MAX_BYTES = 220;
 
-    private static final int RESOURCE_NAME_MAX_LENGTH = 200;
-    private static final int RESOURCE_NAME_MAX_BYTES = 220;
+    private static final int PATH_MAX_BYTES = 900;
 
     private static final String PATTERN = "^(?:[^/\\\\:*?\"<>|]+/?)+$";
 

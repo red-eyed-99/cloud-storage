@@ -9,6 +9,7 @@ public class ConstraintValidationUtil {
 
     private static final String BLANK_MESSAGE_FORMAT = "Parameter '%s' must not be null or empty.";
 
+    private static final String MAX_LENGTH_MESSAGE_FORMAT = "Parameter '%s' length must be no more than %d characters.";
     private static final String MIN_MAX_LENGTH_MESSAGE_FORMAT = "Parameter '%s' length must be between %d and %d characters.";
 
     private static final String MAX_BYTES_MESSAGE_FORMAT = "Parameter '%s' size must be no more than %d bytes.";
@@ -64,6 +65,10 @@ public class ConstraintValidationUtil {
 
     public static String getMinMaxLengthMessage(String parameterName, int minLength, int maxLength) {
         return ConstraintValidationUtil.MIN_MAX_LENGTH_MESSAGE_FORMAT.formatted(parameterName, minLength, maxLength);
+    }
+
+    public static String getMaxLengthMessage(String parameterName, int maxLength) {
+        return ConstraintValidationUtil.MAX_LENGTH_MESSAGE_FORMAT.formatted(parameterName, maxLength);
     }
 
     public static String getMaxBytesMessage(String parameterName, int maxBytes) {

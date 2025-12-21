@@ -2,7 +2,7 @@ package ru.redeyed.cloudstorage.common.validation.annotation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
-import ru.redeyed.cloudstorage.common.validation.validator.ResourcePathValidator;
+import ru.redeyed.cloudstorage.common.validation.validator.SearchQueryValidator;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -10,14 +10,12 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = ResourcePathValidator.class)
-public @interface ValidResourcePath {
+@Constraint(validatedBy = SearchQueryValidator.class)
+public @interface ValidSearchQuery {
 
-    String parameterName() default "path";
+    String parameterName() default "query";
 
-    String message() default "Invalid resource path. Prohibited characters: \\:*?\"<>| .";
-
-    boolean onlyDirectory() default false;
+    String message() default "Invalid query. Prohibited characters: \\/:*?\"<>| .";
 
     Class<?>[] groups() default {};
 
