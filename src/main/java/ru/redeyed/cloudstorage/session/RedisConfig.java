@@ -1,4 +1,4 @@
-package ru.redeyed.cloudstorage.data;
+package ru.redeyed.cloudstorage.session;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

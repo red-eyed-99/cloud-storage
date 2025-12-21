@@ -40,24 +40,24 @@ public class PathUtil {
     }
 
     private static String extractDirectoryName(String path) {
-        var beforeLastDelimiterIndex = path.length() - 2;
+        var beforeLastDelimiterIndex = path.length() - PATH_DELIMITER.length() - 1;
         var penultimateDelimiterIndex = path.lastIndexOf(PATH_DELIMITER, beforeLastDelimiterIndex);
 
         var beginIndex = 0;
-        var endIndex = beforeLastDelimiterIndex + 1;
+        var endIndex = beforeLastDelimiterIndex + PATH_DELIMITER.length();
 
         if (penultimateDelimiterIndex == CHARACTER_NOT_PRESENT) {
             return path.substring(beginIndex, endIndex);
         }
 
-        beginIndex = penultimateDelimiterIndex + 1;
-        endIndex = beforeLastDelimiterIndex + 1;
+        beginIndex = penultimateDelimiterIndex + PATH_DELIMITER.length();
+        endIndex = beforeLastDelimiterIndex + PATH_DELIMITER.length();
 
         return path.substring(beginIndex, endIndex);
     }
 
     private static String removeDirectoryName(String path) {
-        var beforeLastDelimiterIndex = path.length() - 2;
+        var beforeLastDelimiterIndex = path.length() - PATH_DELIMITER.length() - 1;
         var penultimateDelimiterIndex = path.lastIndexOf(PATH_DELIMITER, beforeLastDelimiterIndex);
 
         if (penultimateDelimiterIndex == CHARACTER_NOT_PRESENT) {
@@ -65,7 +65,7 @@ public class PathUtil {
         }
 
         var beginIndex = 0;
-        var endIndex = penultimateDelimiterIndex + 1;
+        var endIndex = penultimateDelimiterIndex + PATH_DELIMITER.length();
 
         return path.substring(beginIndex, endIndex);
     }
@@ -77,7 +77,7 @@ public class PathUtil {
             return path;
         }
 
-        var beginIndex = lastDelimiterIndex + 1;
+        var beginIndex = lastDelimiterIndex + PATH_DELIMITER.length();
 
         return path.substring(beginIndex);
     }
@@ -90,14 +90,14 @@ public class PathUtil {
         }
 
         var beginIndex = 0;
-        var endIndex = lastDelimiterIndex + 1;
+        var endIndex = lastDelimiterIndex + PATH_DELIMITER.length();
 
         return path.substring(beginIndex, endIndex);
     }
 
     public static String trimLastSlash(String path) {
         var beginIndex = 0;
-        var endIndex = path.length() - 1;
+        var endIndex = path.length() - PATH_DELIMITER.length();
         return path.substring(beginIndex, endIndex);
     }
 }
