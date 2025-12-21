@@ -167,7 +167,7 @@ public class MinioStorageService implements SimpleStorageService {
     @Override
     @SneakyThrows
     public void removeDirectory(BucketName bucketName, String path) {
-        var deleteObjects = new ArrayList<DeleteObject>();
+        var objectsToDelete = new ArrayList<DeleteObject>();
 
         var resultItemsToDelete = minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucketName.getValue())
@@ -177,12 +177,16 @@ public class MinioStorageService implements SimpleStorageService {
 
         for (var objectItem : resultItemsToDelete) {
             var deleteObjectPath = objectItem.get().objectName();
-            deleteObjects.add(new DeleteObject(deleteObjectPath));
+            objectsToDelete.add(new DeleteObject(deleteObjectPath));
+        }
+
+        if (objectsToDelete.isEmpty()) {
+            return;
         }
 
         var resultDeleteErrors = minioClient.removeObjects(RemoveObjectsArgs.builder()
                 .bucket(bucketName.getValue())
-                .objects(deleteObjects)
+                .objects(objectsToDelete)
                 .build());
 
         for (var resultDeleteError : resultDeleteErrors) {
