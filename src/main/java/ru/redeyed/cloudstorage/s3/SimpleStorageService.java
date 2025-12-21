@@ -30,4 +30,6 @@ public interface SimpleStorageService {
     boolean fileExists(BucketName bucketName, String path);
 
     boolean directoryExists(BucketName bucketName, String path);
+
+    List<StorageObjectInfo> search(BucketName bucketName, String path, String pattern);
 }

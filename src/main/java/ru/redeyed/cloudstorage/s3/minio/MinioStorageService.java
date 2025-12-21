@@ -244,6 +244,30 @@ public class MinioStorageService implements SimpleStorageService {
         removeDirectory(bucketName, oldPath);
     }
 
+    @Override
+    @SneakyThrows
+    public List<StorageObjectInfo> search(BucketName bucketName, String path, String pattern) {
+        var foundObjectsInfo = new ArrayList<StorageObjectInfo>();
+
+        var resultItems = minioClient.listObjects(ListObjectsArgs.builder()
+                .bucket(bucketName.getValue())
+                .prefix(path)
+                .recursive(true)
+                .build());
+
+        for (var resultItem : resultItems) {
+            var item = resultItem.get();
+
+            var resourceName = PathUtil.extractResourceName(item.objectName());
+
+            if (resourceName.matches(pattern)) {
+                foundObjectsInfo.add(minioObjectMapper.toStorageObjectInfo(item));
+            }
+        }
+
+        return foundObjectsInfo;
+    }
+
     @SneakyThrows
     private Optional<Item> findItem(Iterable<Result<Item>> resultItems, String resourceName, boolean isDirectory) {
         for (var resultItem : resultItems) {

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
+import ru.redeyed.cloudstorage.common.util.RegexpUtil;
 import ru.redeyed.cloudstorage.s3.BucketName;
 import ru.redeyed.cloudstorage.s3.SimpleStorageService;
 import ru.redeyed.cloudstorage.s3.StorageObjectInfo;
@@ -14,6 +15,8 @@ import java.util.zip.ZipOutputStream;
 @Service
 @RequiredArgsConstructor
 public class ResourceService {
+
+    private static final String SEARCH_PATTERN_FORMAT = "^.*%s.*$";
 
     private final SimpleStorageService storageService;
 
@@ -153,5 +156,17 @@ public class ResourceService {
         var fileName = PathUtil.extractResourceName(toPath);
 
         return new ResourceResponseDto(filePath, fileName, fileInfo.size(), ResourceType.FILE);
+    }
+
+    public List<ResourceResponseDto> search(UUID userId, String query) {
+        var path = ResourcePathUtil.createUserResourcePath(userId);
+
+        query = RegexpUtil.escapeSpecialCharacters(query);
+
+        var pattern = SEARCH_PATTERN_FORMAT.formatted(query);
+
+        var foundObjectsInfo = storageService.search(BucketName.USER_FILES, path, pattern);
+
+        return resourceMapper.toResourceResponseDtos(foundObjectsInfo);
     }
 }

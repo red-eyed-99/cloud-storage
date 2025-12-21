@@ -12,6 +12,10 @@ public class ResourcePathUtil {
 
     private static final Pattern USER_FILES_DIR_PATTERN = Pattern.compile("^user-.*-files/");
 
+    public static String createUserResourcePath(UUID userId) {
+        return String.format(USER_FILES_DIR_FORMAT, userId);
+    }
+
     public static String createUserResourcePath(UUID userId, String path) {
         if (PathUtil.isRootDirectory(path)) {
             path = PathUtil.trimLastSlash(path);

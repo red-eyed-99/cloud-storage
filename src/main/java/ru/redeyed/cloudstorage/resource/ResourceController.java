@@ -18,6 +18,7 @@ import ru.redeyed.cloudstorage.auth.UserDetailsImpl;
 import ru.redeyed.cloudstorage.common.ContentDispositionType;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.common.validation.annotation.ValidResourcePath;
+import ru.redeyed.cloudstorage.common.validation.annotation.ValidSearchQuery;
 import java.util.List;
 
 @RestController
@@ -28,16 +29,16 @@ public class ResourceController {
     private final ResourceService resourceService;
 
     @GetMapping("/resource")
-    public ResponseEntity<ResourceResponseDto> getResource(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                           @RequestParam @ValidResourcePath String path) {
+    public ResponseEntity<ResourceResponseDto> get(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                   @RequestParam @ValidResourcePath String path) {
 
         var resourceResponseDto = resourceService.getResource(userDetails.getId(), path);
         return ResponseEntity.ok(resourceResponseDto);
     }
 
     @GetMapping("/resource/download")
-    public ResponseEntity<StreamingResponseBody> downloadResource(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                                  @RequestParam @ValidResourcePath String path) {
+    public ResponseEntity<StreamingResponseBody> download(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                          @RequestParam @ValidResourcePath String path) {
 
         var streamingResponseBody = resourceService.downloadResource(userDetails.getId(), path);
 
@@ -58,15 +59,25 @@ public class ResourceController {
     }
 
     @GetMapping("/resource/move")
-    public ResponseEntity<ResourceResponseDto> moveResource(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                            @RequestParam @ValidResourcePath String from,
-                                                            @RequestParam @ValidResourcePath String to) {
+    public ResponseEntity<ResourceResponseDto> move(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                    @RequestParam @ValidResourcePath String from,
+                                                    @RequestParam @ValidResourcePath String to) {
 
-        return ResponseEntity.ok(resourceService.moveResource(userDetails.getId(), from, to));
+        var resourceResponseDto = resourceService.moveResource(userDetails.getId(), from, to);
+        return ResponseEntity.ok(resourceResponseDto);
     }
+
+    @GetMapping("/resource/search")
+    public ResponseEntity<List<ResourceResponseDto>> search(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                                            @RequestParam @ValidSearchQuery String query) {
+
+        var resourceResponseDtos = resourceService.search(userDetails.getId(), query);
+        return ResponseEntity.ok(resourceResponseDtos);
+    }
+
     @DeleteMapping("/resource")
-    public ResponseEntity<Void> deleteResource(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                               @RequestParam @ValidResourcePath String path) {
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal UserDetailsImpl userDetails,
+                                       @RequestParam @ValidResourcePath String path) {
 
         resourceService.deleteResource(userDetails.getId(), path);
         return ResponseEntity.noContent().build();
