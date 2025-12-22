@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.redeyed.cloudstorage.auth.UserDetailsImpl;
-import ru.redeyed.cloudstorage.common.ContentDispositionType;
+import ru.redeyed.cloudstorage.common.http.ContentDispositionType;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
-import ru.redeyed.cloudstorage.common.validation.annotation.ValidResourcePath;
-import ru.redeyed.cloudstorage.common.validation.annotation.ValidSearchQuery;
+import ru.redeyed.cloudstorage.resource.validation.annotation.ValidResourcePath;
+import ru.redeyed.cloudstorage.resource.validation.annotation.ValidSearchQuery;
 import java.util.List;
 
 @RestController

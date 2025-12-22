@@ -1,8 +1,8 @@
-package ru.redeyed.cloudstorage.common.validation.annotation;
+package ru.redeyed.cloudstorage.resource.validation.annotation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
-import ru.redeyed.cloudstorage.common.validation.validator.ResourcePathValidator;
+import ru.redeyed.cloudstorage.resource.validation.validator.ResourcePathValidator;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

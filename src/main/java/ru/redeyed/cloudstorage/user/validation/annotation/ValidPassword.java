@@ -1,8 +1,8 @@
-package ru.redeyed.cloudstorage.common.validation.annotation;
+package ru.redeyed.cloudstorage.user.validation.annotation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
-import ru.redeyed.cloudstorage.common.validation.validator.UsernameValidator;
+import ru.redeyed.cloudstorage.user.validation.validator.PasswordValidator;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -10,12 +10,12 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = UsernameValidator.class)
-public @interface ValidUsername {
+@Constraint(validatedBy = PasswordValidator.class)
+public @interface ValidPassword {
 
-    String parameterName() default "username";
+    String parameterName() default "password";
 
-    String message() default "Incorrect username. Only latin letters, digits and underscores are allowed.";
+    String message() default "Incorrect password. Allowed characters: a-zA-Z0-9!@#$%^&*(),.?\":{}|<>[]/`~+=-_';";
 
     Class<?>[] groups() default {};
 

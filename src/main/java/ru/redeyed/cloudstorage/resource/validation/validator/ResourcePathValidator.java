@@ -1,8 +1,10 @@
-package ru.redeyed.cloudstorage.common.validation.validator;
+package ru.redeyed.cloudstorage.resource.validation.validator;
 
 import jakarta.validation.ConstraintValidatorContext;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
-import ru.redeyed.cloudstorage.common.validation.annotation.ValidResourcePath;
+import ru.redeyed.cloudstorage.resource.validation.annotation.ValidResourcePath;
+import ru.redeyed.cloudstorage.common.validation.validator.BaseConstraintValidator;
+import ru.redeyed.cloudstorage.common.validation.validator.ConstraintValidationUtil;
 import java.util.regex.Pattern;
 
 public class ResourcePathValidator extends BaseConstraintValidator<ValidResourcePath, String> {

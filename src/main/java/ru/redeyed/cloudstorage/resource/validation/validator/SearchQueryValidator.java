@@ -1,7 +1,8 @@
-package ru.redeyed.cloudstorage.common.validation.validator;
+package ru.redeyed.cloudstorage.resource.validation.validator;
 
 import jakarta.validation.ConstraintValidatorContext;
-import ru.redeyed.cloudstorage.common.validation.annotation.ValidSearchQuery;
+import ru.redeyed.cloudstorage.resource.validation.annotation.ValidSearchQuery;
+import ru.redeyed.cloudstorage.common.validation.validator.BaseConstraintValidator;
 import java.util.regex.Pattern;
 
 public class SearchQueryValidator extends BaseConstraintValidator<ValidSearchQuery, String> {

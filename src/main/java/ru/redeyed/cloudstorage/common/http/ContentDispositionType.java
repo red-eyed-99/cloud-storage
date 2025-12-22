@@ -1,4 +1,4 @@
-package ru.redeyed.cloudstorage.common;
+package ru.redeyed.cloudstorage.common.http;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
