@@ -7,6 +7,8 @@ public class PathUtil {
 
     public static final String PATH_DELIMITER = "/";
 
+    private static final String EMPTY_VALUE = "";
+
     private static final int CHARACTER_NOT_PRESENT = -1;
 
     public static String extractPathFrom(String value, String path) {
@@ -61,7 +63,7 @@ public class PathUtil {
         var penultimateDelimiterIndex = path.lastIndexOf(PATH_DELIMITER, beforeLastDelimiterIndex);
 
         if (penultimateDelimiterIndex == CHARACTER_NOT_PRESENT) {
-            return PATH_DELIMITER;
+            return EMPTY_VALUE;
         }
 
         var beginIndex = 0;
@@ -86,7 +88,7 @@ public class PathUtil {
         var lastDelimiterIndex = path.lastIndexOf(PATH_DELIMITER);
 
         if (lastDelimiterIndex == CHARACTER_NOT_PRESENT) {
-            return PATH_DELIMITER;
+            return EMPTY_VALUE;
         }
 
         var beginIndex = 0;
@@ -96,6 +98,10 @@ public class PathUtil {
     }
 
     public static String trimLastSlash(String path) {
+        if (!path.endsWith(PATH_DELIMITER)) {
+            return path;
+        }
+
         var beginIndex = 0;
         var endIndex = path.length() - PATH_DELIMITER.length();
         return path.substring(beginIndex, endIndex);
