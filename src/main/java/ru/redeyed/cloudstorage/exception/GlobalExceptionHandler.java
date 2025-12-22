@@ -1,5 +1,6 @@
 package ru.redeyed.cloudstorage.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -14,6 +15,7 @@ import ru.redeyed.cloudstorage.resource.ResourceNotFoundException;
 import ru.redeyed.cloudstorage.user.UserAlreadyExistsException;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
@@ -61,7 +63,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponseDto> handle(Exception ignore) {
+    public ResponseEntity<ErrorResponseDto> handle(Exception exception) {
+        log.error(exception.getMessage(), exception);
         return getErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error.");
     }
 
