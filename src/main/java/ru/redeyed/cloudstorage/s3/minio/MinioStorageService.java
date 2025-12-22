@@ -110,14 +110,14 @@ public class MinioStorageService implements SimpleStorageService {
 
     @Override
     @SneakyThrows
-    public List<StorageObjectInfo> uploadFiles(BucketName bucketName, String userFilesPath, List<MultipartFile> files) {
+    public List<StorageObjectInfo> uploadFiles(BucketName bucketName, String rootPath, List<MultipartFile> files) {
         var objectsToUpload = new ArrayList<SnowballObject>();
 
         for (var file : files) {
             var filePath = file.getOriginalFilename();
 
             var snowballObject = new SnowballObject(
-                    userFilesPath + filePath,
+                    rootPath + filePath,
                     file.getInputStream(),
                     file.getSize(),
                     null

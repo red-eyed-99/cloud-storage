@@ -14,7 +14,7 @@ public interface SimpleStorageService {
 
     List<StorageObjectInfo> getDirectoryObjectsInfo(BucketName bucketName, String path, boolean recursive);
 
-    List<StorageObjectInfo> uploadFiles(BucketName bucketName, String userFilesPath, List<MultipartFile> files);
+    List<StorageObjectInfo> uploadFiles(BucketName bucketName, String rootPath, List<MultipartFile> files);
 
     void createDirectory(BucketName bucketName, String path);
 
