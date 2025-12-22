@@ -9,7 +9,9 @@ import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.RemoveObjectsArgs;
 import io.minio.Result;
+import io.minio.SnowballObject;
 import io.minio.StatObjectArgs;
+import io.minio.UploadSnowballObjectsArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.resource.ResourcePathUtil;
 import ru.redeyed.cloudstorage.s3.BucketName;
@@ -46,7 +49,8 @@ public class MinioStorageService implements SimpleStorageService {
             var statObjectResponse = minioClient.statObject(StatObjectArgs.builder()
                     .bucket(bucketName.getValue())
                     .object(path)
-                    .build());
+                    .build()
+            );
 
             return Optional.of(minioObjectMapper.toStorageObjectInfo(statObjectResponse));
 
@@ -70,7 +74,8 @@ public class MinioStorageService implements SimpleStorageService {
         var resultItems = minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucketName.getValue())
                 .prefix(path)
-                .build());
+                .build()
+        );
 
         return findItem(resultItems, directoryName, true)
                 .map(minioObjectMapper::toStorageObjectInfo);
@@ -85,7 +90,8 @@ public class MinioStorageService implements SimpleStorageService {
                 .bucket(bucketName.getValue())
                 .prefix(path)
                 .recursive(recursive)
-                .build());
+                .build()
+        );
 
         for (var resultItem : resultItems) {
             var item = resultItem.get();
@@ -104,12 +110,40 @@ public class MinioStorageService implements SimpleStorageService {
 
     @Override
     @SneakyThrows
+    public List<StorageObjectInfo> uploadFiles(BucketName bucketName, String userFilesPath, List<MultipartFile> files) {
+        var objectsToUpload = new ArrayList<SnowballObject>();
+
+        for (var file : files) {
+            var filePath = file.getOriginalFilename();
+
+            var snowballObject = new SnowballObject(
+                    userFilesPath + filePath,
+                    file.getInputStream(),
+                    file.getSize(),
+                    null
+            );
+
+            objectsToUpload.add(snowballObject);
+        }
+
+        minioClient.uploadSnowballObjects(UploadSnowballObjectsArgs.builder()
+                .bucket(bucketName.getValue())
+                .objects(objectsToUpload)
+                .build()
+        );
+
+        return minioObjectMapper.toStorageObjectsInfo(objectsToUpload);
+    }
+
+    @Override
+    @SneakyThrows
     public void createDirectory(BucketName bucketName, String path) {
         minioClient.putObject(PutObjectArgs.builder()
                 .bucket(bucketName.getValue())
                 .object(path)
                 .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
-                .build());
+                .build()
+        );
     }
 
     @Override
@@ -119,7 +153,8 @@ public class MinioStorageService implements SimpleStorageService {
                 GetObjectArgs.builder()
                         .bucket(bucketName.getValue())
                         .object(path)
-                        .build());
+                        .build()
+        );
     }
 
     @Override
@@ -129,7 +164,8 @@ public class MinioStorageService implements SimpleStorageService {
                 .bucket(bucketName.getValue())
                 .prefix(path)
                 .recursive(true)
-                .build());
+                .build()
+        );
 
         for (var resultItem : resultItemsToDownload) {
             var item = resultItem.get();
@@ -161,7 +197,8 @@ public class MinioStorageService implements SimpleStorageService {
         minioClient.removeObject(RemoveObjectArgs.builder()
                 .bucket(bucketName.getValue())
                 .object(path)
-                .build());
+                .build()
+        );
     }
 
     @Override
@@ -173,7 +210,8 @@ public class MinioStorageService implements SimpleStorageService {
                 .bucket(bucketName.getValue())
                 .prefix(path)
                 .recursive(true)
-                .build());
+                .build()
+        );
 
         for (var objectItem : resultItemsToDelete) {
             var deleteObjectPath = objectItem.get().objectName();
@@ -187,7 +225,8 @@ public class MinioStorageService implements SimpleStorageService {
         var resultDeleteErrors = minioClient.removeObjects(RemoveObjectsArgs.builder()
                 .bucket(bucketName.getValue())
                 .objects(objectsToDelete)
-                .build());
+                .build()
+        );
 
         for (var resultDeleteError : resultDeleteErrors) {
             var deleteError = resultDeleteError.get();
@@ -215,7 +254,8 @@ public class MinioStorageService implements SimpleStorageService {
                         .bucket(bucketName.getValue())
                         .object(oldPath)
                         .build())
-                .build());
+                .build()
+        );
 
         removeFile(bucketName, oldPath);
     }
@@ -229,7 +269,7 @@ public class MinioStorageService implements SimpleStorageService {
 
         for (var objectInfo : directoryObjectsInfo) {
             var pathFromDirectory = PathUtil.extractPathFrom(directoryName, objectInfo.path());
-            var pathWithoutParentDirectory = PathUtil.removeParentDirectory(pathFromDirectory);
+            var pathWithoutParentDirectory = PathUtil.removeRootParentDirectory(pathFromDirectory);
 
             minioClient.copyObject(CopyObjectArgs.builder()
                     .bucket(bucketName.getValue())
@@ -238,7 +278,8 @@ public class MinioStorageService implements SimpleStorageService {
                             .bucket(bucketName.getValue())
                             .object(objectInfo.path())
                             .build())
-                    .build());
+                    .build()
+            );
         }
 
         removeDirectory(bucketName, oldPath);
@@ -253,7 +294,8 @@ public class MinioStorageService implements SimpleStorageService {
                 .bucket(bucketName.getValue())
                 .prefix(path)
                 .recursive(true)
-                .build());
+                .build()
+        );
 
         for (var resultItem : resultItems) {
             var item = resultItem.get();

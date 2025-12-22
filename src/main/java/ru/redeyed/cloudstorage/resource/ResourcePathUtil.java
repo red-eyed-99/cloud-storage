@@ -42,9 +42,7 @@ public class ResourcePathUtil {
         return path.replaceAll(USER_FILES_DIR_PATTERN.pattern(), "");
     }
 
-    public static ResourceType determineResourceType(String path) {
-        return path.endsWith(PathUtil.PATH_DELIMITER)
-                ? ResourceType.DIRECTORY
-                : ResourceType.FILE;
+    public static boolean hasUserFolder(String path) {
+        return USER_FILES_DIR_PATTERN.matcher(path).find();
     }
 }

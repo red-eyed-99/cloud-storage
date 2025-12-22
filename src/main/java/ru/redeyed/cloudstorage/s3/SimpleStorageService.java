@@ -1,5 +1,6 @@
 package ru.redeyed.cloudstorage.s3;
 
+import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +13,8 @@ public interface SimpleStorageService {
     Optional<StorageObjectInfo> findDirectoryInfo(BucketName bucketName, String path);
 
     List<StorageObjectInfo> getDirectoryObjectsInfo(BucketName bucketName, String path, boolean recursive);
+
+    List<StorageObjectInfo> uploadFiles(BucketName bucketName, String userFilesPath, List<MultipartFile> files);
 
     void createDirectory(BucketName bucketName, String path);
 

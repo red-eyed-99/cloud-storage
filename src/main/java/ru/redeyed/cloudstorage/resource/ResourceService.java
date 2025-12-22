@@ -2,13 +2,17 @@ package ru.redeyed.cloudstorage.resource;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.common.util.RegexpUtil;
 import ru.redeyed.cloudstorage.s3.BucketName;
 import ru.redeyed.cloudstorage.s3.SimpleStorageService;
 import ru.redeyed.cloudstorage.s3.StorageObjectInfo;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.zip.ZipOutputStream;
 
@@ -79,6 +83,70 @@ public class ResourceService {
         var directoryName = PathUtil.extractResourceName(path);
 
         return new ResourceResponseDto(createdPath, directoryName, null, ResourceType.DIRECTORY);
+    }
+
+    public List<ResourceResponseDto> uploadFiles(UUID userId, String path, List<MultipartFile> files) {
+        var userFilesPath = PathUtil.isRootDirectory(path)
+                ? ResourcePathUtil.createUserResourcePath(userId)
+                : ResourcePathUtil.createUserResourcePath(userId, path);
+
+        var checkedDirectoriesPaths = new HashSet<String>();
+
+        for (var file : files) {
+            var filePath = Objects.requireNonNull(file.getOriginalFilename());
+
+            if (PathUtil.isFileName(filePath)) {
+                var fileExists = storageService.fileExists(BucketName.USER_FILES, userFilesPath + filePath);
+
+                if (fileExists) {
+                    throw new ResourceAlreadyExistsException(ResourceType.FILE);
+                }
+
+                continue;
+            }
+
+            checkDirectoryAlreadyExists(userFilesPath, filePath, checkedDirectoriesPaths);
+            createNestedDirectories(userFilesPath, filePath, checkedDirectoriesPaths);
+        }
+
+        var uploadedFilesInfo = storageService.uploadFiles(BucketName.USER_FILES, userFilesPath, files);
+
+        return resourceMapper.toResourceResponseDtos(uploadedFilesInfo);
+    }
+
+    private void checkDirectoryAlreadyExists(String userFilesPath, String filePath,
+                                             Set<String> checkedDirectoriesPaths) {
+
+        var rootParentDirectoryPath = userFilesPath + PathUtil.extractRootParentDirectoryName(filePath);
+
+        if (!checkedDirectoriesPaths.contains(rootParentDirectoryPath)) {
+            var directoryExists = storageService.directoryExists(BucketName.USER_FILES, rootParentDirectoryPath);
+
+            if (directoryExists) {
+                throw new ResourceAlreadyExistsException(ResourceType.DIRECTORY);
+            }
+
+            checkedDirectoriesPaths.add(rootParentDirectoryPath);
+        }
+    }
+
+    private void createNestedDirectories(String userFilesPath, String filePath, Set<String> checkedDirectoriesPaths) {
+        var parentDirectoryPath = userFilesPath + PathUtil.removeResourceName(filePath);
+
+        while (!parentDirectoryPath.equals(userFilesPath)) {
+
+            if (!checkedDirectoriesPaths.contains(parentDirectoryPath)) {
+                var directoryExists = storageService.directoryExists(BucketName.USER_FILES, parentDirectoryPath);
+
+                if (!directoryExists) {
+                    storageService.createDirectory(BucketName.USER_FILES, parentDirectoryPath);
+                }
+            }
+
+            checkedDirectoriesPaths.add(parentDirectoryPath);
+
+            parentDirectoryPath = PathUtil.removeResourceName(parentDirectoryPath);
+        }
     }
 
     public StreamingResponseBody downloadResource(UUID userId, String path) {

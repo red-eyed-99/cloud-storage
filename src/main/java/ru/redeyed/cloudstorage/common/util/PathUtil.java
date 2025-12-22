@@ -28,7 +28,19 @@ public class PathUtil {
                 : removeFileName(path);
     }
 
-    public static String removeParentDirectory(String path) {
+    public static String extractRootParentDirectoryName(String path) {
+        var parentDirectoryEndIndex = path.indexOf(PATH_DELIMITER);
+
+        if (parentDirectoryEndIndex == CHARACTER_NOT_PRESENT) {
+            return EMPTY_VALUE;
+        }
+
+        var beginIndex = 0;
+
+        return path.substring(beginIndex, parentDirectoryEndIndex);
+    }
+
+    public static String removeRootParentDirectory(String path) {
         var parentDirectoryEndIndex = path.indexOf(PATH_DELIMITER);
         return path.substring(parentDirectoryEndIndex + PATH_DELIMITER.length());
     }
@@ -39,6 +51,10 @@ public class PathUtil {
 
     public static boolean isDirectory(String path) {
         return path.endsWith(PATH_DELIMITER);
+    }
+
+    public static boolean isFileName(String path) {
+        return !path.contains(PATH_DELIMITER);
     }
 
     private static String extractDirectoryName(String path) {

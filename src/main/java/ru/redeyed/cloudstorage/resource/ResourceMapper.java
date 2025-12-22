@@ -18,7 +18,13 @@ public abstract class ResourceMapper {
 
     @Named("getPath")
     protected String getPath(StorageObjectInfo objectInfo) {
-        return ResourcePathUtil.extractResourcePath(objectInfo.path());
+        var path = objectInfo.path();
+
+        if (ResourcePathUtil.hasUserFolder(path)) {
+            return ResourcePathUtil.extractResourcePath(path);
+        }
+
+        return path;
     }
 
     @Named("getSize")
@@ -28,6 +34,8 @@ public abstract class ResourceMapper {
 
     @Named("getType")
     protected ResourceType getType(StorageObjectInfo objectInfo) {
-        return ResourcePathUtil.determineResourceType(objectInfo.path());
+        return objectInfo.isDirectory()
+                ? ResourceType.DIRECTORY
+                : ResourceType.FILE;
     }
 }
