@@ -1,4 +1,4 @@
-package ru.redeyed.cloudstorage.session;
+package ru.redeyed.cloudstorage.test.auth.session;
 
 import jakarta.servlet.http.Cookie;
 

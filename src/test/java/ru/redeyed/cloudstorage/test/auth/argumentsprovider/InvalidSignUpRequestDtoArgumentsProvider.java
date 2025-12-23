@@ -1,4 +1,4 @@
-package ru.redeyed.cloudstorage.argumentsprovider;
+package ru.redeyed.cloudstorage.test.auth.argumentsprovider;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -6,8 +6,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.support.ParameterDeclarations;
 import ru.redeyed.cloudstorage.auth.dto.SignUpRequestDto;
-import ru.redeyed.cloudstorage.util.data.IncorrectTestDataUtil;
-import ru.redeyed.cloudstorage.util.data.AuthTestData;
+import ru.redeyed.cloudstorage.util.IncorrectTestDataUtil;
+import ru.redeyed.cloudstorage.test.auth.AuthTestData;
 import java.util.stream.Stream;
 
 public class InvalidSignUpRequestDtoArgumentsProvider implements ArgumentsProvider {

@@ -1,4 +1,4 @@
-package ru.redeyed.cloudstorage.session;
+package ru.redeyed.cloudstorage.test.auth.session;
 
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,7 @@ import org.springframework.session.data.redis.RedisSessionRepository;
 import org.springframework.stereotype.Component;
 import ru.redeyed.cloudstorage.auth.UserDetailsImpl;
 import ru.redeyed.cloudstorage.util.Base64Util;
-import ru.redeyed.cloudstorage.util.data.UserTestData;
+import ru.redeyed.cloudstorage.test.user.UserTestData;
 import java.util.List;
 import java.util.Objects;
 

@@ -1,4 +1,4 @@
-package ru.redeyed.cloudstorage.util.data;
+package ru.redeyed.cloudstorage.util;
 
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;

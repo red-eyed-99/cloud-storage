@@ -1,4 +1,4 @@
-package ru.redeyed.cloudstorage.integration;
+package ru.redeyed.cloudstorage.test.integration;
 
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;

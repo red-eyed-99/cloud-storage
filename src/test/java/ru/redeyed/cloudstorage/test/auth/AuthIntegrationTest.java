@@ -1,4 +1,4 @@
-package ru.redeyed.cloudstorage.integration;
+package ru.redeyed.cloudstorage.test.auth;
 
 import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
@@ -8,22 +8,24 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import ru.redeyed.cloudstorage.argumentsprovider.InvalidSignInRequestDtoArgumentsProvider;
-import ru.redeyed.cloudstorage.argumentsprovider.InvalidSignUpRequestDtoArgumentsProvider;
-import ru.redeyed.cloudstorage.session.RedisSessionManager;
 import ru.redeyed.cloudstorage.auth.dto.SignInRequestDto;
 import ru.redeyed.cloudstorage.auth.dto.SignUpRequestDto;
+import ru.redeyed.cloudstorage.test.auth.argumentsprovider.InvalidSignInRequestDtoArgumentsProvider;
+import ru.redeyed.cloudstorage.test.auth.argumentsprovider.InvalidSignUpRequestDtoArgumentsProvider;
+import ru.redeyed.cloudstorage.test.auth.session.RedisSessionConfig;
+import ru.redeyed.cloudstorage.test.auth.session.RedisSessionManager;
+import ru.redeyed.cloudstorage.test.integration.BaseIntegrationTest;
+import ru.redeyed.cloudstorage.test.user.UserTestData;
 import ru.redeyed.cloudstorage.user.UserService;
+import ru.redeyed.cloudstorage.util.IncorrectTestDataUtil;
 import ru.redeyed.cloudstorage.util.JsonUtil;
-import ru.redeyed.cloudstorage.util.data.AuthTestData;
-import ru.redeyed.cloudstorage.util.data.IncorrectTestDataUtil;
-import ru.redeyed.cloudstorage.util.data.UserTestData;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -37,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DisplayName("Authentication")
 @RequiredArgsConstructor
+@Import(RedisSessionConfig.class)
 class AuthIntegrationTest extends BaseIntegrationTest {
 
     private static final String SIGN_IN_URL = "/api/auth/sign-in";

@@ -1,4 +1,4 @@
-package ru.redeyed.cloudstorage.util.data;
+package ru.redeyed.cloudstorage.test.user;
 
 import lombok.experimental.UtilityClass;
 import java.util.UUID;

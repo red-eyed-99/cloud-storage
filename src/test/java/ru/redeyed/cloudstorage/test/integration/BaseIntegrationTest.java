@@ -1,4 +1,4 @@
-package ru.redeyed.cloudstorage.integration;
+package ru.redeyed.cloudstorage.test.integration;
 
 import com.redis.testcontainers.RedisContainer;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;

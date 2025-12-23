@@ -1,18 +1,16 @@
-package ru.redeyed.cloudstorage.config;
+package ru.redeyed.cloudstorage.test.auth.session;
 
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.session.data.redis.RedisIndexedSessionRepository;
-import org.springframework.test.context.ActiveProfiles;
 
-@Configuration
-@ActiveProfiles("test")
-public class RedisTestConfig {
+@TestConfiguration
+public class RedisSessionConfig {
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {

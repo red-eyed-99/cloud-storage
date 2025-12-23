@@ -1,8 +1,9 @@
-package ru.redeyed.cloudstorage.util.data;
+package ru.redeyed.cloudstorage.test.auth;
 
 import lombok.experimental.UtilityClass;
 import ru.redeyed.cloudstorage.auth.dto.SignInRequestDto;
 import ru.redeyed.cloudstorage.auth.dto.SignUpRequestDto;
+import ru.redeyed.cloudstorage.test.user.UserTestData;
 
 @UtilityClass
 public class AuthTestData {
