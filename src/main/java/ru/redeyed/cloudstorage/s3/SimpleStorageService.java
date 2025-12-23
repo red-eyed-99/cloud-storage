@@ -16,7 +16,7 @@ public interface SimpleStorageService {
 
     List<StorageObjectInfo> uploadFiles(BucketName bucketName, String rootPath, List<MultipartFile> files);
 
-    void createDirectory(BucketName bucketName, String path);
+    StorageObjectInfo createDirectory(BucketName bucketName, String path);
 
     InputStream downloadFile(BucketName bucketName, String path);
 

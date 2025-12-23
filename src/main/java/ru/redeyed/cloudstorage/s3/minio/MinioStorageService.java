@@ -9,9 +9,7 @@ import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.RemoveObjectsArgs;
 import io.minio.Result;
-import io.minio.SnowballObject;
 import io.minio.StatObjectArgs;
-import io.minio.UploadSnowballObjectsArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
@@ -30,6 +28,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -111,39 +111,55 @@ public class MinioStorageService implements SimpleStorageService {
     @Override
     @SneakyThrows
     public List<StorageObjectInfo> uploadFiles(BucketName bucketName, String rootPath, List<MultipartFile> files) {
-        var objectsToUpload = new ArrayList<SnowballObject>();
+        var uploadedFilesInfo = new ArrayList<StorageObjectInfo>();
 
-        for (var file : files) {
-            var filePath = file.getOriginalFilename();
+        var executor = Executors.newCachedThreadPool();
 
-            var snowballObject = new SnowballObject(
-                    rootPath + filePath,
-                    file.getInputStream(),
-                    file.getSize(),
-                    null
-            );
+        try {
+            for (var file : files) {
+                var filePath = file.getOriginalFilename();
 
-            objectsToUpload.add(snowballObject);
+                executor.submit(() -> minioClient.putObject(PutObjectArgs.builder()
+                        .bucket(bucketName.getValue())
+                        .object(rootPath + filePath)
+                        .stream(file.getInputStream(), file.getSize(), -1)
+                        .build()
+                ));
+
+                var fileName = PathUtil.extractResourceName(filePath);
+
+                var uploadedFileInfo = new StorageObjectInfo(filePath, fileName, file.getSize(), false);
+
+                uploadedFilesInfo.add(uploadedFileInfo);
+            }
+        } finally {
+            executor.shutdown();
         }
 
-        minioClient.uploadSnowballObjects(UploadSnowballObjectsArgs.builder()
-                .bucket(bucketName.getValue())
-                .objects(objectsToUpload)
-                .build()
-        );
+        try {
+            if (!executor.awaitTermination(1, TimeUnit.HOURS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+        }
 
-        return minioObjectMapper.toStorageObjectsInfo(objectsToUpload);
+        return uploadedFilesInfo;
     }
 
     @Override
     @SneakyThrows
-    public void createDirectory(BucketName bucketName, String path) {
+    public StorageObjectInfo createDirectory(BucketName bucketName, String path) {
         minioClient.putObject(PutObjectArgs.builder()
                 .bucket(bucketName.getValue())
                 .object(path)
                 .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
                 .build()
         );
+
+        var directoryName = PathUtil.extractResourceName(path);
+
+        return new StorageObjectInfo(path, directoryName, 0, true);
     }
 
     @Override
