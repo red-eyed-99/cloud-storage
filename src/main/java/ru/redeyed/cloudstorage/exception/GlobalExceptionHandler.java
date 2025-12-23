@@ -1,6 +1,8 @@
 package ru.redeyed.cloudstorage.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.util.http.fileupload.impl.FileCountLimitExceededException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -9,14 +11,21 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import ru.redeyed.cloudstorage.common.util.DataUnit;
 import ru.redeyed.cloudstorage.resource.ResourceAlreadyExistsException;
 import ru.redeyed.cloudstorage.resource.ResourceNotFoundException;
+import ru.redeyed.cloudstorage.resource.dto.FileCountLimitErrorResponseDto;
+import ru.redeyed.cloudstorage.resource.dto.MaxFileSizeErrorResponseDto;
 import ru.redeyed.cloudstorage.user.UserAlreadyExistsException;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @Value("${spring.servlet.multipart.max-file-size}")
+    private String maxFileSize;
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDto> handle(BadCredentialsException ignore) {
@@ -55,6 +64,36 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponseDto> handle(HttpMessageNotReadableException ignore) {
         return getErrorResponse(HttpStatus.BAD_REQUEST, "Invalid json format.");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<MaxFileSizeErrorResponseDto> handle(MaxUploadSizeExceededException ignore) {
+        if (!hasDataUnit(maxFileSize)) {
+            maxFileSize = maxFileSize + DataUnit.BYTE.getSuffix();
+        }
+
+        var maxFileSizeValue = Long.parseLong(maxFileSize.replaceAll("\\D", ""));
+        var maxFileSizeUnit = maxFileSize.replaceAll("\\d", "");
+
+        var responseDto = new MaxFileSizeErrorResponseDto("File too large.", maxFileSizeValue, maxFileSizeUnit);
+
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(responseDto);
+    }
+
+    private boolean hasDataUnit(String maxFileSize) {
+        for (var dataUnit : DataUnit.values()) {
+            if (maxFileSize.contains(dataUnit.getSuffix())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @ExceptionHandler(FileCountLimitExceededException.class)
+    public ResponseEntity<FileCountLimitErrorResponseDto> handle(FileCountLimitExceededException exception) {
+        var responseDto = new FileCountLimitErrorResponseDto(exception.getMessage(), exception.getLimit());
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(responseDto);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

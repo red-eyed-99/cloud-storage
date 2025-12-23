@@ -19,6 +19,8 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import ru.redeyed.cloudstorage.auth.UserDetailsImpl;
 import ru.redeyed.cloudstorage.common.http.ContentDispositionType;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
+import ru.redeyed.cloudstorage.resource.dto.ResourceResponseDto;
+import ru.redeyed.cloudstorage.resource.validation.annotation.ValidResourceFiles;
 import ru.redeyed.cloudstorage.resource.validation.annotation.ValidResourcePath;
 import ru.redeyed.cloudstorage.resource.validation.annotation.ValidSearchQuery;
 import java.util.List;
@@ -42,7 +44,7 @@ public class ResourceController {
     public ResponseEntity<List<ResourceResponseDto>> uploadFiles(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam(defaultValue = PathUtil.PATH_DELIMITER) @ValidResourcePath(onlyDirectory = true) String path,
-            @RequestPart List<MultipartFile> files
+            @RequestPart @ValidResourceFiles List<MultipartFile> files
     ) {
         var resourceResponseDtos = resourceService.uploadFiles(userDetails.getId(), path, files);
 

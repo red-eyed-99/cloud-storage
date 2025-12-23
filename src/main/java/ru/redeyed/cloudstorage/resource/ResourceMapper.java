@@ -3,6 +3,7 @@ package ru.redeyed.cloudstorage.resource;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
+import ru.redeyed.cloudstorage.resource.dto.ResourceResponseDto;
 import ru.redeyed.cloudstorage.s3.StorageObjectInfo;
 import java.util.List;
 

@@ -1,6 +1,7 @@
-package ru.redeyed.cloudstorage.resource;
+package ru.redeyed.cloudstorage.resource.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import ru.redeyed.cloudstorage.resource.ResourceType;
 
 public record ResourceResponseDto(
 
