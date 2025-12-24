@@ -7,16 +7,12 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.support.ParameterDeclarations;
 import ru.redeyed.cloudstorage.auth.dto.SignInRequestDto;
 import ru.redeyed.cloudstorage.test.auth.AuthTestData;
+import ru.redeyed.cloudstorage.user.validation.validator.PasswordValidator;
+import ru.redeyed.cloudstorage.user.validation.validator.UsernameValidator;
 import ru.redeyed.cloudstorage.util.IncorrectTestDataUtil;
 import java.util.stream.Stream;
 
 public class InvalidSignInRequestDtoArgumentsProvider implements ArgumentsProvider {
-
-    private static final int USERNAME_MIN_LENGTH = 5;
-    private static final int USERNAME_MAX_LENGTH = 20;
-
-    private static final int PASSWORD_MIN_LENGTH = 5;
-    private static final int PASSWORD_MAX_LENGTH = 20;
 
     @Override
     public @NotNull Stream<? extends Arguments> provideArguments(@NotNull ParameterDeclarations parameters,
@@ -40,12 +36,12 @@ public class InvalidSignInRequestDtoArgumentsProvider implements ArgumentsProvid
 
                 IncorrectTestDataUtil.getMinLengthArguments(
                         AuthTestData.getSignInRequestDto(), SignInRequestDto.Fields.USERNAME,
-                        "1234", USERNAME_MIN_LENGTH
+                        "1234", UsernameValidator.MIN_LENGTH
                 ),
 
                 IncorrectTestDataUtil.getMaxLengthArguments(
                         AuthTestData.getSignInRequestDto(), SignInRequestDto.Fields.USERNAME,
-                        "moreThanTwentyCharacters", USERNAME_MAX_LENGTH
+                        "moreThanTwentyCharacters", UsernameValidator.MAX_LENGTH
                 ),
 
                 IncorrectTestDataUtil.getCyrillicArguments(
@@ -74,12 +70,12 @@ public class InvalidSignInRequestDtoArgumentsProvider implements ArgumentsProvid
 
                 IncorrectTestDataUtil.getMinLengthArguments(
                         AuthTestData.getSignInRequestDto(), SignInRequestDto.Fields.PASSWORD,
-                        "1234", PASSWORD_MIN_LENGTH
+                        "1234", PasswordValidator.MIN_LENGTH
                 ),
 
                 IncorrectTestDataUtil.getMaxLengthArguments(
                         AuthTestData.getSignInRequestDto(), SignInRequestDto.Fields.PASSWORD,
-                        "moreThanTwentyCharacters", PASSWORD_MAX_LENGTH
+                        "moreThanTwentyCharacters", PasswordValidator.MAX_LENGTH
                 ),
 
                 IncorrectTestDataUtil.getCyrillicArguments(
