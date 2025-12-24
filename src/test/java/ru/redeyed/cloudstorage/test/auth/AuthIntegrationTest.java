@@ -38,7 +38,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DisplayName("Authentication")
 @RequiredArgsConstructor
-@Import(RedisSessionConfig.class)
 class AuthIntegrationTest extends BaseIntegrationTest {
 
     private final MockMvc mockMvc;
