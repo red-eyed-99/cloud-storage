@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.common.validation.validator.BaseConstraintValidator;
-import ru.redeyed.cloudstorage.common.validation.validator.ConstraintValidationUtil;
+import ru.redeyed.cloudstorage.common.validation.ValidationUtil;
 import ru.redeyed.cloudstorage.resource.validation.annotation.ValidResourceFiles;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -54,22 +54,22 @@ public class ResourceFilesValidator extends BaseConstraintValidator<ValidResourc
             return true;
         }
 
-        if (ConstraintValidationUtil.isStartWith(PathUtil.PATH_DELIMITER, filePath)) {
+        if (ValidationUtil.isStartWith(PathUtil.PATH_DELIMITER, filePath)) {
             setCustomMessage(context, filePath + " must not start with a '" + PathUtil.PATH_DELIMITER + "' .");
             return false;
         }
 
-        if (!ConstraintValidationUtil.checkMaxBytes(filePath, ResourcePathValidator.PATH_MAX_BYTES)) {
+        if (!ValidationUtil.checkMaxBytes(filePath, ResourcePathValidator.PATH_MAX_BYTES)) {
             setCustomMessage(context, filePath + " is too long.");
             return false;
         }
 
-        if (ConstraintValidationUtil.hasExtraSpaces(filePath)) {
+        if (ValidationUtil.hasExtraSpaces(filePath)) {
             setCustomMessage(context, filePath + " has extra spaces.");
             return false;
         }
 
-        if (!ConstraintValidationUtil.patternMatches(pattern, filePath)) {
+        if (!ValidationUtil.patternMatches(pattern, filePath)) {
             setCustomMessage(context, filePath + " contains prohibited characters: \\:*?\"<>| .");
             return false;
         }
@@ -80,13 +80,13 @@ public class ResourceFilesValidator extends BaseConstraintValidator<ValidResourc
     private boolean fileNameIsValid(String filePath, ConstraintValidatorContext context) {
         var fileName = PathUtil.extractResourceName(filePath);
 
-        if (!ConstraintValidationUtil.checkMaxLength(fileName, ResourcePathValidator.RESOURCE_NAME_MAX_LENGTH)) {
+        if (!ValidationUtil.checkMaxLength(fileName, ResourcePathValidator.RESOURCE_NAME_MAX_LENGTH)) {
             var message = "%s filename is too long. Max - %d characters.";
             setCustomMessage(context, message.formatted(filePath, ResourcePathValidator.RESOURCE_NAME_MAX_LENGTH));
             return false;
         }
 
-        if (!ConstraintValidationUtil.checkMaxBytes(fileName, ResourcePathValidator.RESOURCE_NAME_MAX_BYTES)) {
+        if (!ValidationUtil.checkMaxBytes(fileName, ResourcePathValidator.RESOURCE_NAME_MAX_BYTES)) {
             var message = "%s filename is too big. Max - %d bytes.";
             setCustomMessage(context, message.formatted(filePath, ResourcePathValidator.RESOURCE_NAME_MAX_BYTES));
             return false;

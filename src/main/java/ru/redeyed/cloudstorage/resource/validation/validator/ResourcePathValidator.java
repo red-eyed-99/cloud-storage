@@ -4,7 +4,7 @@ import jakarta.validation.ConstraintValidatorContext;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.resource.validation.annotation.ValidResourcePath;
 import ru.redeyed.cloudstorage.common.validation.validator.BaseConstraintValidator;
-import ru.redeyed.cloudstorage.common.validation.validator.ConstraintValidationUtil;
+import ru.redeyed.cloudstorage.common.validation.ValidationUtil;
 import java.util.regex.Pattern;
 
 public class ResourcePathValidator extends BaseConstraintValidator<ValidResourcePath, String> {
@@ -52,12 +52,12 @@ public class ResourcePathValidator extends BaseConstraintValidator<ValidResource
     }
 
     private boolean resourceNameIsValid(ConstraintValidatorContext context, String value) {
-        if (!ConstraintValidationUtil.checkMaxLength(value, RESOURCE_NAME_MAX_LENGTH)) {
+        if (!ValidationUtil.checkMaxLength(value, RESOURCE_NAME_MAX_LENGTH)) {
             setCustomMessage(context, "Resource name length must be no more than " + RESOURCE_NAME_MAX_LENGTH + " characters");
             return false;
         }
 
-        if (!ConstraintValidationUtil.checkMaxBytes(value, RESOURCE_NAME_MAX_BYTES)) {
+        if (!ValidationUtil.checkMaxBytes(value, RESOURCE_NAME_MAX_BYTES)) {
             setCustomMessage(context, "Resource name size must be no more than " + RESOURCE_NAME_MAX_BYTES + " bytes");
             return false;
         }

@@ -2,6 +2,8 @@ package ru.redeyed.cloudstorage.common.validation.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import ru.redeyed.cloudstorage.common.validation.ValidationErrorMessageUtil;
+import ru.redeyed.cloudstorage.common.validation.ValidationUtil;
 import java.lang.annotation.Annotation;
 import java.util.regex.Pattern;
 
@@ -12,8 +14,9 @@ public abstract class BaseConstraintValidator<A extends Annotation, T> implement
     protected String message;
 
     protected boolean checkNotBlank(ConstraintValidatorContext context, String value) {
-        if (ConstraintValidationUtil.isBlank(value)) {
-            setCustomMessage(context, ConstraintValidationUtil.getIsBlankMessage(parameterName));
+        if (ValidationUtil.isBlank(value)) {
+            var message = ValidationErrorMessageUtil.getIsBlankMessage(parameterName);
+            setCustomMessage(context, message);
             return false;
         }
 
@@ -21,11 +24,9 @@ public abstract class BaseConstraintValidator<A extends Annotation, T> implement
     }
 
     protected boolean checkLengthBetween(ConstraintValidatorContext context, String value, int minLength, int maxLength) {
-        if (!ConstraintValidationUtil.checkLength(value, minLength, maxLength)) {
-            setCustomMessage(
-                    context,
-                    ConstraintValidationUtil.getMinMaxLengthMessage(parameterName, minLength, maxLength)
-            );
+        if (!ValidationUtil.checkLength(value, minLength, maxLength)) {
+            var message = ValidationErrorMessageUtil.getMinMaxLengthMessage(parameterName, minLength, maxLength);
+            setCustomMessage(context, message);
             return false;
         }
 
@@ -33,8 +34,9 @@ public abstract class BaseConstraintValidator<A extends Annotation, T> implement
     }
 
     protected boolean checkMaxLength(ConstraintValidatorContext context, String value, int maxLength) {
-        if (!ConstraintValidationUtil.checkMaxLength(value, maxLength)) {
-            setCustomMessage(context, ConstraintValidationUtil.getMaxLengthMessage(parameterName, maxLength));
+        if (!ValidationUtil.checkMaxLength(value, maxLength)) {
+            var message = ValidationErrorMessageUtil.getMaxLengthMessage(parameterName, maxLength);
+            setCustomMessage(context, message);
             return false;
         }
 
@@ -42,8 +44,9 @@ public abstract class BaseConstraintValidator<A extends Annotation, T> implement
     }
 
     protected boolean checkMaxBytes(ConstraintValidatorContext context, String value, int maxBytes) {
-        if (!ConstraintValidationUtil.checkMaxBytes(value, maxBytes)) {
-            setCustomMessage(context, ConstraintValidationUtil.getMaxBytesMessage(parameterName, maxBytes));
+        if (!ValidationUtil.checkMaxBytes(value, maxBytes)) {
+            var message = ValidationErrorMessageUtil.getMaxBytesMessage(parameterName, maxBytes);
+            setCustomMessage(context, message);
             return false;
         }
 
@@ -51,8 +54,9 @@ public abstract class BaseConstraintValidator<A extends Annotation, T> implement
     }
 
     protected boolean checkNotStartWith(String value, String prefix, ConstraintValidatorContext context) {
-        if (ConstraintValidationUtil.isStartWith(prefix, value)) {
-            setCustomMessage(context, ConstraintValidationUtil.getNotStartWithMessage(parameterName, prefix));
+        if (ValidationUtil.isStartWith(prefix, value)) {
+            var message = ValidationErrorMessageUtil.getNotStartWithMessage(parameterName, prefix);
+            setCustomMessage(context, message);
             return false;
         }
 
@@ -60,8 +64,9 @@ public abstract class BaseConstraintValidator<A extends Annotation, T> implement
     }
 
     protected boolean checkEndWith(ConstraintValidatorContext context, String value, String suffix) {
-        if (!ConstraintValidationUtil.isEndWith(suffix, value)) {
-            setCustomMessage(context, ConstraintValidationUtil.getEndWithMessage(parameterName, suffix));
+        if (!ValidationUtil.isEndWith(suffix, value)) {
+            var message = ValidationErrorMessageUtil.getEndWithMessage(parameterName, suffix);
+            setCustomMessage(context, message);
             return false;
         }
 
@@ -69,9 +74,9 @@ public abstract class BaseConstraintValidator<A extends Annotation, T> implement
     }
 
     protected boolean checkNotStartOrEndWith(ConstraintValidatorContext context, String value, String pattern) {
-
-        if (ConstraintValidationUtil.isStartOrEndWith(pattern, value)) {
-            setCustomMessage(context, ConstraintValidationUtil.getNotStartOrEndWithMessage(parameterName, pattern));
+        if (ValidationUtil.isStartOrEndWith(pattern, value)) {
+            var message = ValidationErrorMessageUtil.getNotStartOrEndWithMessage(parameterName, pattern);
+            setCustomMessage(context, message);
             return false;
         }
 
@@ -79,7 +84,7 @@ public abstract class BaseConstraintValidator<A extends Annotation, T> implement
     }
 
     protected boolean patternMatches(ConstraintValidatorContext context, String value, Pattern pattern) {
-        if (!ConstraintValidationUtil.patternMatches(pattern, value)) {
+        if (!ValidationUtil.patternMatches(pattern, value)) {
             setCustomMessage(context, message);
             return false;
         }
@@ -88,8 +93,9 @@ public abstract class BaseConstraintValidator<A extends Annotation, T> implement
     }
 
     protected boolean checkExtraSpaces(ConstraintValidatorContext context, String value) {
-        if (ConstraintValidationUtil.hasExtraSpaces(value)) {
-            setCustomMessage(context, ConstraintValidationUtil.getExtraSpacesMessage(parameterName));
+        if (ValidationUtil.hasExtraSpaces(value)) {
+            var message = ValidationErrorMessageUtil.getExtraSpacesMessage(parameterName);
+            setCustomMessage(context, message);
             return false;
         }
 
