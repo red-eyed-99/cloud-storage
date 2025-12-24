@@ -13,6 +13,7 @@ lombok-mapstruct-binding = "0.2.0"
 testcontainers-junit-jupiter = "1.21.3"
 testcontainers-postgresql = "1.21.3"
 testcontainers-redis = "2.2.4"
+testcontainers-minio = "2.0.3"
 
 # --- Plugins ---
 [plugins]
@@ -34,6 +35,7 @@ spring-boot-starter-webmvc-test = { group = "org.springframework.boot", name = "
 spring-boot-testcontainers = { group = "org.springframework.boot", name = "spring-boot-testcontainers", version.ref = "spring-boot" }
 testcontainers-junit-jupiter = { group = "org.testcontainers", name = "junit-jupiter", version.ref = "testcontainers-junit-jupiter"}
 testcontainers-postgresql = { group = "org.testcontainers", name = "postgresql", version.ref = "testcontainers-postgresql"}
+testcontainers-minio = { group = "org.testcontainers", name = "testcontainers-minio", version.ref = "testcontainers-minio"}
 testcontainers-redis = { group = "com.redis", name = "testcontainers-redis", version.ref = "testcontainers-redis"}
 
 spring-session-data-redis = { group = "org.springframework.session", name = "spring-session-data-redis", version.ref = "spring-boot" }
@@ -58,5 +60,6 @@ spring-boot-starters = [
 spring-boot-test-starters = ["spring-boot-starter-test", "spring-boot-starter-webmvc-test"]
 
 testcontainers = [
-    "spring-boot-testcontainers", "testcontainers-junit-jupiter", "testcontainers-postgresql", "testcontainers-redis"
+    "spring-boot-testcontainers", "testcontainers-junit-jupiter", "testcontainers-postgresql", "testcontainers-minio",
+    "testcontainers-redis"
 ]
