@@ -6,10 +6,11 @@ import org.apache.tomcat.util.http.fileupload.impl.FileCountLimitExceededExcepti
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
-import ru.redeyed.cloudstorage.common.validation.validator.BaseConstraintValidator;
 import ru.redeyed.cloudstorage.common.validation.ValidationUtil;
+import ru.redeyed.cloudstorage.common.validation.validator.BaseConstraintValidator;
 import ru.redeyed.cloudstorage.resource.validation.annotation.ValidResourceFiles;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class ResourceFilesValidator extends BaseConstraintValidator<ValidResourceFiles, List<MultipartFile>> {
@@ -34,12 +35,37 @@ public class ResourceFilesValidator extends BaseConstraintValidator<ValidResourc
             throw new FileCountLimitExceededException("Too many files.", filesCountLimit);
         }
 
+        var commonRootDirectoryName = (String) null;
+
         for (var file : files) {
-            var filePath = file.getOriginalFilename();
+            var filePath = Objects.requireNonNull(file.getOriginalFilename());
+
+            if (commonRootDirectoryName == null && !PathUtil.isFileName(filePath)) {
+                commonRootDirectoryName = PathUtil.extractRootParentDirectoryName(filePath);
+            }
+
+            if (file != files.getFirst()) {
+                if (!isRootDirectoryValid(filePath, commonRootDirectoryName, context)) {
+                    return false;
+                }
+            }
 
             if (!isValid(filePath, context)) {
                 return false;
             }
+        }
+
+        return true;
+    }
+
+    private boolean isRootDirectoryValid(String filePath, String commonRootDirectoryName,
+                                         ConstraintValidatorContext context) {
+
+        var rootDirectoryName = PathUtil.extractRootParentDirectoryName(filePath);
+
+        if (!rootDirectoryName.equals(commonRootDirectoryName)) {
+            setCustomMessage(context, "All files must have the same root directory.");
+            return false;
         }
 
         return true;
