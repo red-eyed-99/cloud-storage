@@ -22,6 +22,7 @@ public abstract class MinioObjectMapper {
 
     @Mapping(target = "path", expression = "java(statObjectResponse.object())")
     @Mapping(target = "name", source = "statObjectResponse", qualifiedByName = "getName")
+    @Mapping(target = "size", expression = "java(statObjectResponse.size())")
     @Mapping(target = "isDirectory", constant = "false")
     public abstract StorageObjectInfo toStorageObjectInfo(StatObjectResponse statObjectResponse);
 
