@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContext;
@@ -19,11 +18,11 @@ import ru.redeyed.cloudstorage.auth.dto.SignInRequestDto;
 import ru.redeyed.cloudstorage.auth.dto.SignUpRequestDto;
 import ru.redeyed.cloudstorage.test.auth.argumentsprovider.InvalidSignInRequestDtoArgumentsProvider;
 import ru.redeyed.cloudstorage.test.auth.argumentsprovider.InvalidSignUpRequestDtoArgumentsProvider;
-import ru.redeyed.cloudstorage.test.auth.session.RedisSessionConfig;
 import ru.redeyed.cloudstorage.test.auth.session.RedisSessionManager;
 import ru.redeyed.cloudstorage.test.integration.BaseIntegrationTest;
 import ru.redeyed.cloudstorage.test.user.UserTestData;
 import ru.redeyed.cloudstorage.user.UserService;
+import ru.redeyed.cloudstorage.util.ApiUtil;
 import ru.redeyed.cloudstorage.util.IncorrectTestDataUtil;
 import ru.redeyed.cloudstorage.util.JsonUtil;
 import java.util.Objects;
@@ -41,10 +40,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RequiredArgsConstructor
 @Import(RedisSessionConfig.class)
 class AuthIntegrationTest extends BaseIntegrationTest {
-
-    private static final String SIGN_IN_URL = "/api/auth/sign-in";
-    private static final String SIGN_UP_URL = "/api/auth/sign-up";
-    private static final String SIGN_OUT_URL = "/api/auth/sign-out";
 
     private final MockMvc mockMvc;
 
@@ -66,7 +61,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
             var guestSession = redisSessionManager.createGuestSession();
             var guestSessionInfo = redisSessionManager.getSessionInfo(guestSession);
 
-            var mvcResult = mockMvc.perform(post(SIGN_IN_URL)
+            var mvcResult = mockMvc.perform(post(ApiUtil.SIGN_IN_URL)
                             .cookie(guestSessionInfo.cookie())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
@@ -98,7 +93,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
             );
             var jsonRequest = JsonUtil.toJson(signInRequestDto);
 
-            mockMvc.perform(post(SIGN_IN_URL)
+            mockMvc.perform(post(ApiUtil.SIGN_IN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
                     .andExpectAll(
@@ -115,7 +110,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
             );
             var jsonRequest = JsonUtil.toJson(signInRequestDto);
 
-            mockMvc.perform(post(SIGN_IN_URL)
+            mockMvc.perform(post(ApiUtil.SIGN_IN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
                     .andExpectAll(
@@ -132,7 +127,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
 
             var jsonRequest = JsonUtil.toJson(signInRequestDto);
 
-            mockMvc.perform(post(SIGN_IN_URL)
+            mockMvc.perform(post(ApiUtil.SIGN_IN_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
                     .andExpectAll(
@@ -154,7 +149,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
             var guestSession = redisSessionManager.createGuestSession();
             var guestSessionInfo = redisSessionManager.getSessionInfo(guestSession);
 
-            var mvcResult = mockMvc.perform(post(SIGN_UP_URL)
+            var mvcResult = mockMvc.perform(post(ApiUtil.SIGN_UP_URL)
                             .cookie(guestSessionInfo.cookie())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
@@ -188,7 +183,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
             );
             var jsonRequest = JsonUtil.toJson(signUpRequestDto);
 
-            mockMvc.perform(post(SIGN_UP_URL)
+            mockMvc.perform(post(ApiUtil.SIGN_UP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
                     .andExpectAll(
@@ -205,7 +200,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
 
             var jsonRequest = JsonUtil.toJson(signUpRequestDto);
 
-            mockMvc.perform(post(SIGN_UP_URL)
+            mockMvc.perform(post(ApiUtil.SIGN_UP_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(jsonRequest))
                     .andExpectAll(
@@ -225,7 +220,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
-            mockMvc.perform(post(SIGN_OUT_URL)
+            mockMvc.perform(post(ApiUtil.SIGN_OUT_URL)
                             .cookie(authSessionInfo.cookie()))
                     .andExpectAll(
                             status().isNoContent(),
@@ -244,7 +239,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
             var guestSession = redisSessionManager.createGuestSession();
             var guestSessionInfo = redisSessionManager.getSessionInfo(guestSession);
 
-            mockMvc.perform(post(SIGN_OUT_URL)
+            mockMvc.perform(post(ApiUtil.SIGN_OUT_URL)
                             .cookie(guestSessionInfo.cookie()))
                     .andExpect(status().isUnauthorized());
         }
