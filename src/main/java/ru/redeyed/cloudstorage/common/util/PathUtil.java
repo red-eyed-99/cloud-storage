@@ -6,6 +6,7 @@ import lombok.experimental.UtilityClass;
 public class PathUtil {
 
     public static final String PATH_DELIMITER = "/";
+    public static final String EXTENSION_DELIMITER = ".";
 
     private static final String EMPTY_VALUE = "";
 
@@ -111,6 +112,18 @@ public class PathUtil {
         var endIndex = lastDelimiterIndex + PATH_DELIMITER.length();
 
         return path.substring(beginIndex, endIndex);
+    }
+
+    public static String extractFileExtension(String path) {
+        var lastDotIndex = path.lastIndexOf(EXTENSION_DELIMITER);
+
+        if (lastDotIndex == CHARACTER_NOT_PRESENT) {
+            return EMPTY_VALUE;
+        }
+
+        var beginIndex = lastDotIndex + EXTENSION_DELIMITER.length();
+
+        return path.substring(beginIndex);
     }
 
     public static String trimLastSlash(String path) {
