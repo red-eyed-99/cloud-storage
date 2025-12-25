@@ -14,15 +14,15 @@ public class FileArgumentsProvider implements ArgumentsProvider {
     public @NotNull Stream<? extends Arguments> provideArguments(@NotNull ParameterDeclarations parameters,
                                                                  @NotNull ExtensionContext context) {
         return Stream.of(
-                createArguments("test-file"),
-                createArguments("test-file.txt"),
-                createArguments("folder1/test-file.txt"),
-                createArguments("folder1/folder2/test-file.txt")
+                createArguments("test-file", MockFileCreator.EMPTY_CONTENT),
+                createArguments("test-file.txt", MockFileCreator.TEST_TEXT_CONTENT),
+                createArguments("folder1/test-file.txt", MockFileCreator.TEST_TEXT_CONTENT),
+                createArguments("folder1/folder2/test-file.txt", MockFileCreator.TEST_TEXT_CONTENT)
         );
     }
 
-    private Arguments createArguments(String filePath) {
-        var file = MockFileCreator.create(filePath);
+    private Arguments createArguments(String filePath, byte[] content) {
+        var file = MockFileCreator.create(filePath, content);
         return Arguments.of(file, filePath);
     }
 }
