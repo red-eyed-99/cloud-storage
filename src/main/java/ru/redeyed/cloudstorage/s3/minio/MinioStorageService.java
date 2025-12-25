@@ -299,6 +299,7 @@ public class MinioStorageService implements SimpleStorageService {
         }
 
         removeDirectory(bucketName, oldPath);
+        createDirectory(bucketName, newPath);
     }
 
     @Override
