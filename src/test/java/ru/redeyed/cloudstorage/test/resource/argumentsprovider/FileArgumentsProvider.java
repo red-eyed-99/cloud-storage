@@ -8,7 +8,7 @@ import org.junit.jupiter.params.support.ParameterDeclarations;
 import ru.redeyed.cloudstorage.util.MockFileCreator;
 import java.util.stream.Stream;
 
-public class GetFileInfoArgumentsProvider implements ArgumentsProvider {
+public class FileArgumentsProvider implements ArgumentsProvider {
 
     @Override
     public @NotNull Stream<? extends Arguments> provideArguments(@NotNull ParameterDeclarations parameters,
