@@ -11,7 +11,11 @@ public class ApiUtil {
 
     public static final String RESOURCE_URL = "/api/resource";
     public static final String DOWNLOAD_RESOURCE_URL = "/api/resource/download";
+    public static final String MOVE_RESOURCE_URL = "/api/resource/move";
 
     public static final String REQUEST_PARAM_PATH_NAME = "path";
+    public static final String REQUEST_PARAM_FROM_PATH_NAME = "from";
+    public static final String REQUEST_PARAM_TO_PATH_NAME = "to";
+
     public static final String REQUEST_PART_FILES_NAME = "files";
 }

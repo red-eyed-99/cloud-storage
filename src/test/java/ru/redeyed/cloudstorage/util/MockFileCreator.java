@@ -12,7 +12,15 @@ public class MockFileCreator {
 
     public static final byte[] TEST_TEXT_CONTENT = "Test text".getBytes();
 
+    public static MockMultipartFile create(String filePath) {
+        return createFile(filePath, EMPTY_CONTENT);
+    }
+
     public static MockMultipartFile create(String filePath, byte[] content) {
+        return createFile(filePath, content);
+    }
+
+    private static MockMultipartFile createFile(String filePath, byte[] content) {
         var fileExtension = PathUtil.extractFileExtension(filePath);
 
         return switch (fileExtension) {
