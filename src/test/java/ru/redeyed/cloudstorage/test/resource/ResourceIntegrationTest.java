@@ -2,9 +2,12 @@ package ru.redeyed.cloudstorage.test.resource;
 
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.CsvFileSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
@@ -33,68 +36,113 @@ public class ResourceIntegrationTest extends BaseIntegrationTest {
 
     private final SimpleStorageService storageService;
 
-    @ParameterizedTest(name = "{1}")
-    @DisplayName("Get information about file")
-    @ArgumentsSource(GetFileInfoArgumentsProvider.class)
-    void shouldReturnFileInfo(MockMultipartFile file, String filePath) throws Exception {
-        var authSession = redisSessionManager.createAuthenticatedSession();
-        var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+    @Nested
+    @DisplayName("Get information about resource")
+    class GetResourceInfoTests {
 
-        var rootPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-        var filePathWithoutName = PathUtil.removeResourceName(filePath);
+        @ParameterizedTest(name = "{1}")
+        @DisplayName("Get file info")
+        @ArgumentsSource(GetFileInfoArgumentsProvider.class)
+        void shouldReturnFileInfo(MockMultipartFile file, String filePath) throws Exception {
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
-        var expectedFilePath = filePathWithoutName.isEmpty()
-                ? PathUtil.PATH_DELIMITER
-                : filePathWithoutName;
+            var rootPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
+            var filePathWithoutName = PathUtil.removeResourceName(filePath);
 
-        var expectedFileName = PathUtil.extractResourceName(filePath);
+            var expectedFilePath = filePathWithoutName.isEmpty()
+                    ? PathUtil.PATH_DELIMITER
+                    : filePathWithoutName;
 
-        storageService.uploadFiles(BucketName.USER_FILES, rootPath, List.of(file));
+            var expectedFileName = PathUtil.extractResourceName(filePath);
 
-        mockMvc.perform(get(ApiUtil.GET_RESOURCE_INFO_URL)
-                        .cookie(authSessionInfo.cookie())
-                        .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, file.getOriginalFilename()))
-                .andExpectAll(
-                        status().isOk(),
-                        jsonPath("$.path").value(expectedFilePath),
-                        jsonPath("$.name").value(expectedFileName),
-                        jsonPath("$.size").value(file.getSize()),
-                        jsonPath("$.type").value(ResourceType.FILE.toString())
-                );
+            storageService.uploadFiles(BucketName.USER_FILES, rootPath, List.of(file));
+
+            mockMvc.perform(get(ApiUtil.GET_RESOURCE_INFO_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, file.getOriginalFilename()))
+                    .andExpectAll(
+                            status().isOk(),
+                            jsonPath("$.path").value(expectedFilePath),
+                            jsonPath("$.name").value(expectedFileName),
+                            jsonPath("$.size").value(file.getSize()),
+                            jsonPath("$.type").value(ResourceType.FILE.toString())
+                    );
+        }
+
+        @ParameterizedTest
+        @DisplayName("Get directory info")
+        @ValueSource(strings = {
+                "test-directory/",
+                "test-directory-1/test-directory-2/",
+                "test-directory-1/test-directory-2/test-directory-3/"
+        })
+        void shouldReturnDirectoryInfo(String directoryPath) throws Exception {
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            var path = ResourcePathUtil.createUserResourcePath(UserTestData.ID) + directoryPath;
+
+            var directoryPathWithoutName = PathUtil.removeResourceName(directoryPath);
+
+            var expectedDirectoryPath = directoryPathWithoutName.isEmpty()
+                    ? PathUtil.PATH_DELIMITER
+                    : directoryPathWithoutName;
+
+            var expectedDirectoryName = PathUtil.extractResourceName(directoryPath);
+
+            storageService.createDirectory(BucketName.USER_FILES, path);
+
+            mockMvc.perform(get(ApiUtil.GET_RESOURCE_INFO_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, directoryPath))
+                    .andExpectAll(
+                            status().isOk(),
+                            jsonPath("$.path").value(expectedDirectoryPath),
+                            jsonPath("$.name").value(expectedDirectoryName),
+                            jsonPath("$.size").doesNotExist(),
+                            jsonPath("$.type").value(ResourceType.DIRECTORY.toString())
+                    );
+        }
+
+        @ParameterizedTest
+        @DisplayName("Resource doesn't exist")
+        @ValueSource(strings = {"file.txt", "folder/"})
+        void shouldReturnNotFound(String path) throws Exception {
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(get(ApiUtil.GET_RESOURCE_INFO_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
+                    .andExpect(status().isNotFound());
+        }
+
+        @ParameterizedTest
+        @DisplayName("Invalid path parameter")
+        @CsvFileSource(resources = "/data/invalid-resource-path-parameters.csv")
+        void shouldReturnBadRequest(String path) throws Exception {
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(get(ApiUtil.GET_RESOURCE_INFO_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("User unauthorized")
+        void shouldReturnUnauthorized() throws Exception {
+            var guestSession = redisSessionManager.createGuestSession();
+            var guestSessionInfo = redisSessionManager.getSessionInfo(guestSession);
+
+            mockMvc.perform(get(ApiUtil.GET_RESOURCE_INFO_URL)
+                            .cookie(guestSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, "dummy"))
+                    .andExpect(status().isUnauthorized());
+        }
     }
 
-    @ParameterizedTest(name = "{0}")
-    @DisplayName("Get information about directory")
-    @CsvSource({
-            "test-directory/",
-            "test-directory-1/test-directory-2/",
-            "test-directory-1/test-directory-2/test-directory-3/"
-    })
-    void shouldReturnDirectoryInfo(String directoryPath) throws Exception {
-        var authSession = redisSessionManager.createAuthenticatedSession();
-        var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
-        var path = ResourcePathUtil.createUserResourcePath(UserTestData.ID) + directoryPath;
-
-        var directoryPathWithoutName = PathUtil.removeResourceName(directoryPath);
-
-        var expectedDirectoryPath = directoryPathWithoutName.isEmpty()
-                ? PathUtil.PATH_DELIMITER
-                : directoryPathWithoutName;
-
-        var expectedDirectoryName = PathUtil.extractResourceName(directoryPath);
-
-        storageService.createDirectory(BucketName.USER_FILES, path);
-
-        mockMvc.perform(get(ApiUtil.GET_RESOURCE_INFO_URL)
-                        .cookie(authSessionInfo.cookie())
-                        .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, directoryPath))
-                .andExpectAll(
-                        status().isOk(),
-                        jsonPath("$.path").value(expectedDirectoryPath),
-                        jsonPath("$.name").value(expectedDirectoryName),
-                        jsonPath("$.size").doesNotExist(),
-                        jsonPath("$.type").value(ResourceType.DIRECTORY.toString())
-                );
-    }
 }
