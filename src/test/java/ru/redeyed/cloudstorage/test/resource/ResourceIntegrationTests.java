@@ -1,38 +1,39 @@
 package ru.redeyed.cloudstorage.test.resource;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.multipart.MultipartFile;
-import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.resource.ResourcePathUtil;
 import ru.redeyed.cloudstorage.resource.ResourceType;
 import ru.redeyed.cloudstorage.s3.BucketName;
 import ru.redeyed.cloudstorage.s3.SimpleStorageService;
 import ru.redeyed.cloudstorage.test.auth.session.RedisSessionManager;
 import ru.redeyed.cloudstorage.test.integration.BaseIntegrationTest;
-import ru.redeyed.cloudstorage.test.resource.argumentsprovider.FileArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.ResourceAlreadyExistsArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.DownloadDirectoryArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.GetDirectoryInfoArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.MoveDirectoryArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.RenameDirectoryArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.file.DownloadFileArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.file.GetFileInfoArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.file.MoveFileArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.file.RenameFileArgumentsProvider;
 import ru.redeyed.cloudstorage.test.user.UserTestData;
 import ru.redeyed.cloudstorage.util.ApiUtil;
-import ru.redeyed.cloudstorage.util.MockFileCreator;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -53,74 +54,57 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
 
     private final RedisSessionManager redisSessionManager;
 
+    private final ResourceManager resourceManager;
+
     private final SimpleStorageService storageService;
 
     @AfterEach
-    void removeCreatedObjects() {
-        var userFilesPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-        storageService.removeDirectory(BucketName.USER_FILES, userFilesPath);
+    void clearResources() {
+        resourceManager.clearResources();
     }
 
     @Nested
     @DisplayName("Get information about resource")
     class GetResourceInfoTests {
 
-        @ParameterizedTest(name = "{1}")
+        @ParameterizedTest
         @DisplayName("Get file info")
-        @ArgumentsSource(FileArgumentsProvider.class)
-        void shouldReturnFileInfo(MockMultipartFile file, String filePath) throws Exception {
+        @ArgumentsSource(GetFileInfoArgumentsProvider.class)
+        @SneakyThrows
+        void shouldReturnFileInfo(String path, String expectedPath, String expectedName, long expectedSize) {
+            resourceManager.createDefaultResources();
+
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
-            var rootPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-            var filePathWithoutName = PathUtil.removeResourceName(filePath);
-
-            var expectedFilePath = filePathWithoutName.isEmpty()
-                    ? PathUtil.PATH_DELIMITER
-                    : filePathWithoutName;
-
-            var expectedFileName = PathUtil.extractResourceName(filePath);
-
-            storageService.uploadFiles(BucketName.USER_FILES, rootPath, List.of(file));
-
             mockMvc.perform(get(ApiUtil.RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, file.getOriginalFilename()))
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
                     .andExpectAll(
                             status().isOk(),
-                            jsonPath("$.path").value(expectedFilePath),
-                            jsonPath("$.name").value(expectedFileName),
-                            jsonPath("$.size").value(file.getSize()),
+                            jsonPath("$.path").value(expectedPath),
+                            jsonPath("$.name").value(expectedName),
+                            jsonPath("$.size").value(expectedSize),
                             jsonPath("$.type").value(ResourceType.FILE.toString())
                     );
         }
 
         @ParameterizedTest
         @DisplayName("Get directory info")
-        @MethodSource("ru.redeyed.cloudstorage.test.resource.ResourceIntegrationTests#getDirectoryPaths")
-        void shouldReturnDirectoryInfo(String directoryPath) throws Exception {
+        @ArgumentsSource(GetDirectoryInfoArgumentsProvider.class)
+        void shouldReturnDirectoryInfo(String path, String expectedPath, String expectedName) throws Exception {
+            resourceManager.createDefaultResources();
+
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
-            var path = ResourcePathUtil.createUserResourcePath(UserTestData.ID) + directoryPath;
-
-            var directoryPathWithoutName = PathUtil.removeResourceName(directoryPath);
-
-            var expectedDirectoryPath = directoryPathWithoutName.isEmpty()
-                    ? PathUtil.PATH_DELIMITER
-                    : directoryPathWithoutName;
-
-            var expectedDirectoryName = PathUtil.extractResourceName(directoryPath);
-
-            storageService.createDirectory(BucketName.USER_FILES, path);
-
             mockMvc.perform(get(ApiUtil.RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, directoryPath))
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
                     .andExpectAll(
                             status().isOk(),
-                            jsonPath("$.path").value(expectedDirectoryPath),
-                            jsonPath("$.name").value(expectedDirectoryName),
+                            jsonPath("$.path").value(expectedPath),
+                            jsonPath("$.name").value(expectedName),
                             jsonPath("$.size").doesNotExist(),
                             jsonPath("$.type").value(ResourceType.DIRECTORY.toString())
                     );
@@ -128,7 +112,7 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
 
         @ParameterizedTest
         @DisplayName("Resource doesn't exist")
-        @ValueSource(strings = {"file.txt", "folder/"})
+        @ValueSource(strings = {"non-existent-file.txt", "non-existent-folder/"})
         void shouldReturnNotFound(String path) throws Exception {
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
@@ -171,46 +155,51 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
 
         @ParameterizedTest
         @DisplayName("Delete file")
-        @ArgumentsSource(FileArgumentsProvider.class)
-        void shouldDeleteFile(MockMultipartFile file) throws Exception {
+        @ValueSource(strings = {
+                ResourcePaths.UNDEFINED_FILE_1, ResourcePaths.FILE_1_TXT, ResourcePaths.FOLDER_1_FILE_2_TXT,
+                ResourcePaths.FOLDER_1_FOLDER_2_FILE_3_TXT
+        })
+        void shouldDeleteFile(String path) throws Exception {
+            var userFilePath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, path);
+
+            resourceManager.createDefaultResources();
+
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
-            var rootPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-            var filePath = file.getOriginalFilename();
-
-            storageService.uploadFiles(BucketName.USER_FILES, rootPath, List.of(file));
-
             mockMvc.perform(delete(ApiUtil.RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, filePath))
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
                     .andExpect(status().isNoContent());
 
-            assertFalse(storageService.fileExists(BucketName.USER_FILES, rootPath + filePath));
+            assertFalse(storageService.objectExists(BucketName.USER_FILES, userFilePath));
         }
 
         @ParameterizedTest
         @DisplayName("Delete directory")
-        @MethodSource("ru.redeyed.cloudstorage.test.resource.ResourceIntegrationTests#getDirectoryPaths")
-        void shouldDeleteDirectory(String directoryPath) throws Exception {
+        @ValueSource(strings = {
+                ResourcePaths.FOLDER_1, ResourcePaths.FOLDER_1_FOLDER_2, ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3,
+                ResourcePaths.FOLDER_4
+        })
+        void shouldDeleteDirectory(String path) throws Exception {
+            var userDirectoryPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, path);
+
+            resourceManager.createDefaultResources();
+
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
-            var path = ResourcePathUtil.createUserResourcePath(UserTestData.ID) + directoryPath;
-
-            storageService.createDirectory(BucketName.USER_FILES, path);
-
             mockMvc.perform(delete(ApiUtil.RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, directoryPath))
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
                     .andExpect(status().isNoContent());
 
-            assertFalse(storageService.directoryExists(BucketName.USER_FILES, path));
+            assertFalse(storageService.objectExists(BucketName.USER_FILES, userDirectoryPath));
         }
 
         @ParameterizedTest
         @DisplayName("Resource doesn't exist")
-        @ValueSource(strings = {"file.txt", "folder/"})
+        @ValueSource(strings = {"non-existent-file.txt", "non-existent-folder/"})
         void shouldReturnNoContent(String path) throws Exception {
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
@@ -251,60 +240,37 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
     @DisplayName("Download resource")
     class DownloadResourceTests {
 
-        @Test
+        @ParameterizedTest
         @DisplayName("Download file")
-        void shouldDownloadFile() throws Exception {
-            var filePath = "test.txt";
-            var file = MockFileCreator.create(filePath, MockFileCreator.TEST_TEXT_CONTENT);
+        @ArgumentsSource(DownloadFileArgumentsProvider.class)
+        void shouldDownloadFile(String path, byte[] expectedContent) throws Exception {
+            resourceManager.createDefaultResources();
 
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
-
-            var rootPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-
-            storageService.uploadFiles(BucketName.USER_FILES, rootPath, List.of(file));
 
             mockMvc.perform(get(ApiUtil.DOWNLOAD_RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, filePath))
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
                     .andExpectAll(
                             status().isOk(),
                             content().contentType(MediaType.APPLICATION_OCTET_STREAM),
-                            content().bytes(file.getBytes())
+                            content().bytes(expectedContent)
                     );
         }
 
-        @Test
+        @ParameterizedTest
         @DisplayName("Download directory")
-        void shouldDownloadZip() throws Exception {
+        @ArgumentsSource(DownloadDirectoryArgumentsProvider.class)
+        void shouldDownloadZip(String path, List<String> resourcePaths) throws Exception {
+            resourceManager.createDefaultResources();
+
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
-            var resourcePaths = getDirectoryResourcePaths();
-
-            var directoryName = PathUtil.extractRootParentDirectoryName(resourcePaths.getFirst());
-            var directoryToDownload = directoryName + PathUtil.PATH_DELIMITER;
-
-            var rootPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-
-            var files = new ArrayList<MultipartFile>();
-
-            for (var path : resourcePaths) {
-                if (PathUtil.isDirectory(path)) {
-                    storageService.createDirectory(BucketName.USER_FILES, rootPath + path);
-                    return;
-                }
-
-                var file = MockFileCreator.create(path, MockFileCreator.TEST_TEXT_CONTENT);
-
-                files.add(file);
-            }
-
-            storageService.uploadFiles(BucketName.USER_FILES, rootPath, files);
-
             var mvcResult = mockMvc.perform(get(ApiUtil.DOWNLOAD_RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, directoryToDownload))
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
                     .andExpectAll(
                             status().isOk(),
                             content().contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -318,9 +284,21 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
             assertZipCorrect(resultZip, resourcePaths);
         }
 
+        private static void assertZipCorrect(byte[] zip, List<String> resourcePaths) throws IOException {
+            try (var zipInputStream = new ZipInputStream(new ByteArrayInputStream(zip))) {
+                var currentResourceNumber = 0;
+
+                while (currentResourceNumber < resourcePaths.size()) {
+                    var zipEntry = Objects.requireNonNull(zipInputStream.getNextEntry());
+                    var resourcePath = resourcePaths.get(currentResourceNumber++);
+                    assertEquals(resourcePath, zipEntry.getName());
+                }
+            }
+        }
+
         @ParameterizedTest
         @DisplayName("Resource doesn't exist")
-        @ValueSource(strings = {"file.txt", "folder/"})
+        @ValueSource(strings = {"non-existent-file.txt", "non-existent-folder/"})
         void shouldReturnNotFound(String path) throws Exception {
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
@@ -361,318 +339,188 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
     @DisplayName("Move/rename resource")
     class MoveResourceTests {
 
-        @Test
+        @ParameterizedTest
         @DisplayName("Move file")
-        void shouldMoveFile() throws Exception {
-            var filePath = "test.txt";
-            var file = MockFileCreator.create(filePath);
+        @ArgumentsSource(MoveFileArgumentsProvider.class)
+        @SneakyThrows
+        void shouldMoveFile(
+                String from, String to,
+                String expectedFilePath, String expectedFileName, long expectedFileSize
+        ) {
+            var userFileFromPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, from);
+            var userFileToPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, to);
 
-            var rootPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-            var pathToMove = "folder1/test.txt";
-
-            storageService.uploadFiles(BucketName.USER_FILES, rootPath, List.of(file));
+            resourceManager.createDefaultResources();
 
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
             mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, filePath)
-                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, pathToMove)
-                    )
+                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, from)
+                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, to))
                     .andExpectAll(
                             status().isOk(),
-                            jsonPath("$.path").value(pathToMove),
-                            jsonPath("$.name").value(PathUtil.extractResourceName(filePath)),
-                            jsonPath("$.size").value(file.getSize()),
+                            jsonPath("$.path").value(expectedFilePath),
+                            jsonPath("$.name").value(expectedFileName),
+                            jsonPath("$.size").value(expectedFileSize),
                             jsonPath("$.type").value(ResourceType.FILE.toString())
                     );
 
             assertAll(
-                    () -> assertFalse(storageService.fileExists(BucketName.USER_FILES, rootPath + filePath)),
-                    () -> assertTrue(storageService.fileExists(BucketName.USER_FILES, rootPath + pathToMove))
+                    () -> assertFalse(storageService.objectExists(BucketName.USER_FILES, userFileFromPath)),
+                    () -> assertTrue(storageService.objectExists(BucketName.USER_FILES, userFileToPath))
             );
         }
 
-        @Test
+        @ParameterizedTest
         @DisplayName("Rename file")
-        void shouldRenameFile() throws Exception {
-            var filePath = "old-name.txt";
-            var file = MockFileCreator.create(filePath);
+        @ArgumentsSource(RenameFileArgumentsProvider.class)
+        @SneakyThrows
+        void shouldRenameFile(
+                String from, String to,
+                String expectedFilePath, String expectedFileName, long expectedFileSize
+        ) {
+            var userFileFromPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, from);
+            var userFileToPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, to);
 
-            var rootPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-            var newFilePath = "new-name.txt";
-
-            storageService.uploadFiles(BucketName.USER_FILES, rootPath, List.of(file));
+            resourceManager.createDefaultResources();
 
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
             mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, filePath)
-                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, newFilePath)
-                    )
+                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, from)
+                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, to))
                     .andExpectAll(
                             status().isOk(),
-                            jsonPath("$.path").value(newFilePath),
-                            jsonPath("$.name").value(PathUtil.extractResourceName(newFilePath)),
-                            jsonPath("$.size").value(file.getSize()),
+                            jsonPath("$.path").value(expectedFilePath),
+                            jsonPath("$.name").value(expectedFileName),
+                            jsonPath("$.size").value(expectedFileSize),
                             jsonPath("$.type").value(ResourceType.FILE.toString())
                     );
 
             assertAll(
-                    () -> assertFalse(storageService.fileExists(BucketName.USER_FILES, rootPath + filePath)),
-                    () -> assertTrue(storageService.fileExists(BucketName.USER_FILES, rootPath + newFilePath))
+                    () -> assertFalse(storageService.objectExists(BucketName.USER_FILES, userFileFromPath)),
+                    () -> assertTrue(storageService.objectExists(BucketName.USER_FILES, userFileToPath))
             );
         }
 
-        @Test
-        @DisplayName("Move empty directory")
-        void shouldMoveDirectory() throws Exception {
-            var oldDirectoryPath = "folder1/";
-            var newDirectoryPath = "folder2/folder1/";
+        @ParameterizedTest
+        @DisplayName("Move directory")
+        @ArgumentsSource(MoveDirectoryArgumentsProvider.class)
+        @SneakyThrows
+        void shouldMoveDirectory(
+                String from, String to,
+                String expectedDirectoryPath, String expectedDirectoryName, List<String> expectedExistResourcePaths
+        ) {
+            var userOldDirectoryPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, from);
 
-            var userOldDirectoryPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, oldDirectoryPath);
-            var userNewDirectoryPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, newDirectoryPath);
-
-            storageService.createDirectory(BucketName.USER_FILES, userOldDirectoryPath);
+            resourceManager.createDefaultResources();
 
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
             mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, oldDirectoryPath)
-                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, newDirectoryPath)
-                    )
+                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, from)
+                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, to))
                     .andExpectAll(
                             status().isOk(),
-                            jsonPath("$.path").value(newDirectoryPath),
-                            jsonPath("$.name").value(PathUtil.extractResourceName(oldDirectoryPath)),
+                            jsonPath("$.path").value(expectedDirectoryPath),
+                            jsonPath("$.name").value(expectedDirectoryName),
                             jsonPath("$.size").doesNotExist(),
                             jsonPath("$.type").value(ResourceType.DIRECTORY.toString())
                     );
 
-            assertAll(
-                    () -> assertFalse(storageService.directoryExists(BucketName.USER_FILES, userOldDirectoryPath)),
-                    () -> assertTrue(storageService.directoryExists(BucketName.USER_FILES, userNewDirectoryPath))
-            );
+            assertFalse(storageService.objectExists(BucketName.USER_FILES, userOldDirectoryPath));
+
+            for (var resourcePath : expectedExistResourcePaths) {
+                assertTrue(storageService.objectExists(BucketName.USER_FILES, resourcePath));
+            }
         }
 
-        @Test
-        @DisplayName("Rename empty directory")
-        void shouldRenameDirectory() throws Exception {
-            var oldDirectoryPath = "folder1/";
-            var newDirectoryPath = "folder2/";
+        @ParameterizedTest
+        @DisplayName("Rename directory")
+        @ArgumentsSource(RenameDirectoryArgumentsProvider.class)
+        @SneakyThrows
+        void shouldRenameDirectory(
+                String from, String to,
+                String expectedDirectoryPath, String expectedDirectoryName, List<String> expectedExistResourcePaths
+        ) {
+            var userOldDirectoryPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, from);
 
-            var userOldDirectoryPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, oldDirectoryPath);
-            var userNewDirectoryPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID, newDirectoryPath);
-
-            storageService.createDirectory(BucketName.USER_FILES, userOldDirectoryPath);
+            resourceManager.createDefaultResources();
 
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
             mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, oldDirectoryPath)
-                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, newDirectoryPath)
-                    )
+                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, from)
+                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, to))
                     .andExpectAll(
                             status().isOk(),
-                            jsonPath("$.path").value(newDirectoryPath),
-                            jsonPath("$.name").value(PathUtil.extractResourceName(newDirectoryPath)),
+                            jsonPath("$.path").value(expectedDirectoryPath),
+                            jsonPath("$.name").value(expectedDirectoryName),
                             jsonPath("$.size").doesNotExist(),
                             jsonPath("$.type").value(ResourceType.DIRECTORY.toString())
                     );
 
-            assertAll(
-                    () -> assertFalse(storageService.directoryExists(BucketName.USER_FILES, userOldDirectoryPath)),
-                    () -> assertTrue(storageService.directoryExists(BucketName.USER_FILES, userNewDirectoryPath))
-            );
+            assertFalse(storageService.objectExists(BucketName.USER_FILES, userOldDirectoryPath));
+
+            for (var resourcePath : expectedExistResourcePaths) {
+                assertTrue(storageService.objectExists(BucketName.USER_FILES, resourcePath));
+            }
         }
 
-        @Test
-        @DisplayName("Move directory with resources")
-        void shouldMoveDirectoryWithResources() throws Exception {
-            var userFilesPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-
-            var oldDirectoryPath = "folder1/";
-            var oldSubdirectoryPath = oldDirectoryPath + "sub-folder/";
-
-            var newDirectoryPath = "folder2/folder1/";
-            var newSubdirectoryPath = newDirectoryPath + "sub-folder/";
-
-            var userOldDirectoryPath = userFilesPath + oldDirectoryPath;
-            var userNewDirectoryPath = userFilesPath + newDirectoryPath;
-
-            var firstFileName = "file1.txt";
-            var secondFileName = "file2.txt";
-
-            var firstFile = MockFileCreator.create(oldDirectoryPath + firstFileName);
-            var secondFile = MockFileCreator.create(oldSubdirectoryPath + secondFileName);
-
-            storageService.uploadFiles(BucketName.USER_FILES, userFilesPath, List.of(firstFile, secondFile));
+        @ParameterizedTest
+        @DisplayName("Resource already exists")
+        @ArgumentsSource(ResourceAlreadyExistsArgumentsProvider.class)
+        void shouldReturnConflict(String from, String to) throws Exception {
+            resourceManager.createDefaultResources();
 
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
             mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, oldDirectoryPath)
-                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, newDirectoryPath)
-                    )
-                    .andExpectAll(
-                            status().isOk(),
-                            jsonPath("$.path").value(newDirectoryPath),
-                            jsonPath("$.name").value(PathUtil.extractResourceName(oldDirectoryPath)),
-                            jsonPath("$.size").doesNotExist(),
-                            jsonPath("$.type").value(ResourceType.DIRECTORY.toString())
-                    );
-
-            var subdirectoryExpectedPath = userFilesPath + newSubdirectoryPath;
-            var firstFileExpectedPath = userNewDirectoryPath + firstFileName;
-            var secondFileExpectedPath = userFilesPath + newSubdirectoryPath + secondFileName;
-
-            assertAll(
-                    () -> assertFalse(storageService.directoryExists(BucketName.USER_FILES, userOldDirectoryPath)),
-                    () -> assertTrue(storageService.directoryExists(BucketName.USER_FILES, userNewDirectoryPath)),
-                    () -> assertTrue(storageService.directoryExists(BucketName.USER_FILES, subdirectoryExpectedPath)),
-                    () -> assertTrue(storageService.fileExists(BucketName.USER_FILES, firstFileExpectedPath)),
-                    () -> assertTrue(storageService.fileExists(BucketName.USER_FILES, secondFileExpectedPath))
-            );
-        }
-
-        @Test
-        @DisplayName("Rename directory with resources")
-        void shouldRenameDirectoryWithResources() throws Exception {
-            var userFilesPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-
-            var oldDirectoryPath = "folder1/";
-            var oldSubdirectoryPath = oldDirectoryPath + "sub-folder/";
-
-            var newDirectoryPath = "folder2/";
-            var newSubdirectoryPath = newDirectoryPath + "sub-folder/";
-
-            var userOldDirectoryPath = userFilesPath + oldDirectoryPath;
-            var userNewDirectoryPath = userFilesPath + newDirectoryPath;
-
-            var firstFileName = "file1.txt";
-            var secondFileName = "file2.txt";
-
-            var firstFile = MockFileCreator.create(oldDirectoryPath + firstFileName);
-            var secondFile = MockFileCreator.create(oldSubdirectoryPath + secondFileName);
-
-            storageService.uploadFiles(BucketName.USER_FILES, userFilesPath, List.of(firstFile, secondFile));
-
-            var authSession = redisSessionManager.createAuthenticatedSession();
-            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
-
-            mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
-                            .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, oldDirectoryPath)
-                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, newDirectoryPath)
-                    )
-                    .andExpectAll(
-                            status().isOk(),
-                            jsonPath("$.path").value(newDirectoryPath),
-                            jsonPath("$.name").value(PathUtil.extractResourceName(newDirectoryPath)),
-                            jsonPath("$.size").doesNotExist(),
-                            jsonPath("$.type").value(ResourceType.DIRECTORY.toString())
-                    );
-
-            var subdirectoryExpectedPath = userFilesPath + newSubdirectoryPath;
-            var firstFileExpectedPath = userNewDirectoryPath + firstFileName;
-            var secondFileExpectedPath = userFilesPath + newSubdirectoryPath + secondFileName;
-
-            assertAll(
-                    () -> assertFalse(storageService.directoryExists(BucketName.USER_FILES, userOldDirectoryPath)),
-                    () -> assertTrue(storageService.directoryExists(BucketName.USER_FILES, userNewDirectoryPath)),
-                    () -> assertTrue(storageService.directoryExists(BucketName.USER_FILES, subdirectoryExpectedPath)),
-                    () -> assertTrue(storageService.fileExists(BucketName.USER_FILES, firstFileExpectedPath)),
-                    () -> assertTrue(storageService.fileExists(BucketName.USER_FILES, secondFileExpectedPath))
-            );
-        }
-
-        @Test
-        @DisplayName("File already exists")
-        void shouldReturnConflictWhenFileExists() throws Exception {
-            var filePath = "file.txt";
-            var file = MockFileCreator.create(filePath);
-
-            var userFilesPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-
-            storageService.uploadFiles(BucketName.USER_FILES, userFilesPath, List.of(file));
-
-            var authSession = redisSessionManager.createAuthenticatedSession();
-            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
-
-            mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
-                            .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, filePath)
-                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, filePath))
-                    .andExpect(status().isConflict());
-        }
-
-        @Test
-        @DisplayName("Directory already exists")
-        void shouldReturnConflictWhenDirectoryExists() throws Exception {
-            var directoryPath = "folder/";
-            var userFilesPath = ResourcePathUtil.createUserResourcePath(UserTestData.ID);
-            var path = userFilesPath + directoryPath;
-
-            storageService.createDirectory(BucketName.USER_FILES, path);
-
-            var authSession = redisSessionManager.createAuthenticatedSession();
-            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
-
-            mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
-                            .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, directoryPath)
-                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, directoryPath))
+                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, from)
+                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, to))
                     .andExpect(status().isConflict());
         }
 
         @ParameterizedTest
         @DisplayName("Resource doesn't exist")
-        @CsvSource({"file.txt,file1.txt", "folder1/,folder2/"})
-        void shouldReturnNotFound(String fromPath, String toPath) throws Exception {
+        @CsvSource({
+                "non-existent-file.txt,file.txt",
+                "non-existent-folder/,folder/",
+                "non-existent-file.txt,folder/non-existent-file.txt",
+                "non-existent-folder/,folder/non-existent-folder/,"
+        })
+        void shouldReturnNotFound(String from, String to) throws Exception {
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
             mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, fromPath)
-                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, toPath))
+                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, from)
+                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, to))
                     .andExpect(status().isNotFound());
         }
 
         @ParameterizedTest
-        @DisplayName("Invalid 'from' path parameter")
-        @CsvFileSource(resources = "/data/invalid-resource-path-parameters.csv")
-        void shouldReturnBadRequestWhenFromPathIsInvalid(String path) throws Exception {
+        @DisplayName("Invalid 'from' or 'to' path parameters")
+        @CsvFileSource(resources = "/data/invalid-from-to-resource-path-parameters.csv", numLinesToSkip = 1)
+        void shouldReturnBadRequest(String from, String to) throws Exception {
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
             mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, path)
-                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, "correct"))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @ParameterizedTest
-        @DisplayName("Invalid 'to' path parameter")
-        @CsvFileSource(resources = "/data/invalid-resource-path-parameters.csv")
-        void shouldReturnBadRequestWhenToPathIsInvalid(String path) throws Exception {
-            var authSession = redisSessionManager.createAuthenticatedSession();
-            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
-
-            mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
-                            .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, "correct")
-                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, path))
+                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, from)
+                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, to))
                     .andExpect(status().isBadRequest());
         }
 
@@ -689,35 +537,4 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                     .andExpect(status().isUnauthorized());
         }
     }
-
-    private static Stream<Arguments> getDirectoryPaths() {
-        return Stream.of(
-                Arguments.of("test-directory/"),
-                Arguments.of("test-directory-1/test-directory-2/"),
-                Arguments.of("test-directory-1/test-directory-2/test-directory-3/")
-        );
-    }
-
-    private static List<String> getDirectoryResourcePaths() {
-        return List.of(
-                "folder1/file.txt",
-                "folder1/folder2-2/",
-                "folder1/folder2-1/file",
-                "folder1/folder2/file.txt",
-                "folder1/folder2/folder3/file.txt"
-        );
-    }
-
-    private static void assertZipCorrect(byte[] zip, List<String> resourcePaths) throws IOException {
-        try (var zipInputStream = new ZipInputStream(new ByteArrayInputStream(zip))) {
-            var currentResourceNumber = 0;
-
-            while (currentResourceNumber < resourcePaths.size()) {
-                var zipEntry = Objects.requireNonNull(zipInputStream.getNextEntry());
-                var resourcePath = resourcePaths.get(currentResourceNumber++);
-                assertEquals(resourcePath, zipEntry.getName());
-            }
-        }
-    }
-
 }

@@ -46,6 +46,10 @@ public class PathUtil {
         return path.substring(parentDirectoryEndIndex + PATH_DELIMITER.length());
     }
 
+    public static String replace(String from, String to, String path) {
+        return path.replace(from, to);
+    }
+
     public static boolean isRootDirectory(String path) {
         return path.equals(PATH_DELIMITER);
     }
@@ -114,16 +118,16 @@ public class PathUtil {
         return path.substring(beginIndex, endIndex);
     }
 
-    public static String extractFileExtension(String path) {
+    public static FileExtension extractFileExtension(String path) {
         var lastDotIndex = path.lastIndexOf(EXTENSION_DELIMITER);
 
         if (lastDotIndex == CHARACTER_NOT_PRESENT) {
-            return EMPTY_VALUE;
+            return FileExtension.UNDEFINED;
         }
 
         var beginIndex = lastDotIndex + EXTENSION_DELIMITER.length();
 
-        return path.substring(beginIndex);
+        return FileExtension.fromString(path.substring(beginIndex));
     }
 
     public static String trimLastSlash(String path) {

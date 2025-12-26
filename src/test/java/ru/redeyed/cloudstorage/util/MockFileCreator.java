@@ -8,15 +8,20 @@ import ru.redeyed.cloudstorage.common.util.PathUtil;
 @UtilityClass
 public class MockFileCreator {
 
-    public static final byte[] EMPTY_CONTENT = new byte[0];
+    public static final byte[] DEFAULT_CONTENT = new byte[]{1, 2, 3};
+    public static final long DEFAULT_CONTENT_SIZE_BYTES = 3;
 
-    public static final byte[] TEST_TEXT_CONTENT = "Test text".getBytes();
+    public static final byte[] DEFAULT_TEXT_CONTENT = "Test text".getBytes();
+    public static final long DEFAULT_TEXT_CONTENT_SIZE_BYTES = 9;
 
-    public static MockMultipartFile create(String filePath) {
-        return createFile(filePath, EMPTY_CONTENT);
-    }
+    public static MockMultipartFile createDefault(String filePath) {
+        var fileExtension = PathUtil.extractFileExtension(filePath);
 
-    public static MockMultipartFile create(String filePath, byte[] content) {
+        var content = switch (fileExtension) {
+            case UNDEFINED -> DEFAULT_CONTENT;
+            case TXT -> DEFAULT_TEXT_CONTENT;
+        };
+
         return createFile(filePath, content);
     }
 
@@ -24,9 +29,8 @@ public class MockFileCreator {
         var fileExtension = PathUtil.extractFileExtension(filePath);
 
         return switch (fileExtension) {
-            case "" -> createUndefinedFile(filePath, content);
-            case "txt" -> createTextFile(filePath, content);
-            default -> throw new IllegalArgumentException("Unknown file extension: " + fileExtension);
+            case UNDEFINED -> createUndefinedFile(filePath, content);
+            case TXT -> createTextFile(filePath, content);
         };
     }
 
