@@ -8,6 +8,10 @@ spring:
   application:
     name: ${APPLICATION_NAME:cloud-storage}
 
+  mvc:
+    async:
+      request-timeout: ${ASYNC_REQUEST_TIMEOUT:30m}
+
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/cloud-storage-db}
     username: ${DATABASE_USERNAME:user}
