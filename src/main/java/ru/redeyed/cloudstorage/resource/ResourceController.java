@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import ru.redeyed.cloudstorage.auth.UserDetailsImpl;
 import ru.redeyed.cloudstorage.common.http.ContentDispositionType;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.resource.dto.ResourceResponseDto;
+import ru.redeyed.cloudstorage.resource.validation.annotation.SameResourceType;
 import ru.redeyed.cloudstorage.resource.validation.annotation.ValidResourceFiles;
 import ru.redeyed.cloudstorage.resource.validation.annotation.ValidResourcePath;
 import ru.redeyed.cloudstorage.resource.validation.annotation.ValidSearchQuery;
@@ -27,6 +29,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@Validated
 @RequiredArgsConstructor
 public class ResourceController {
 
@@ -76,6 +79,7 @@ public class ResourceController {
     }
 
     @GetMapping("/resource/move")
+    @SameResourceType
     public ResponseEntity<ResourceResponseDto> move(@AuthenticationPrincipal UserDetailsImpl userDetails,
                                                     @RequestParam @ValidResourcePath String from,
                                                     @RequestParam @ValidResourcePath String to) {

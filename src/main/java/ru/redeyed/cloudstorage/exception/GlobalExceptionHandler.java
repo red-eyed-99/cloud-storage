@@ -1,5 +1,7 @@
 package ru.redeyed.cloudstorage.exception;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.impl.FileCountLimitExceededException;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +42,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> handle(ResourceNotFoundException exception) {
         return getErrorResponse(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponseDto> handle(ConstraintViolationException exception) {
+        var message = exception.getConstraintViolations().stream()
+                .findFirst()
+                .map(ConstraintViolation::getMessage)
+                .orElseThrow();
+
+        return getErrorResponse(HttpStatus.BAD_REQUEST, message);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
