@@ -8,11 +8,9 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.RemoveObjectsArgs;
-import io.minio.Result;
 import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
 import io.minio.messages.DeleteObject;
-import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +42,7 @@ public class MinioStorageService implements SimpleStorageService {
 
     @Override
     @SneakyThrows
-    public Optional<StorageObjectInfo> findFileInfo(BucketName bucketName, String path) {
+    public Optional<StorageObjectInfo> findObjectInfo(BucketName bucketName, String path) {
         try {
             var statObjectResponse = minioClient.statObject(StatObjectArgs.builder()
                     .bucket(bucketName.getValue())
@@ -63,22 +61,6 @@ public class MinioStorageService implements SimpleStorageService {
 
             throw exception;
         }
-    }
-
-    @Override
-    public Optional<StorageObjectInfo> findDirectoryInfo(BucketName bucketName, String path) {
-        path = PathUtil.trimLastSlash(path);
-
-        var directoryName = PathUtil.extractResourceName(path);
-
-        var resultItems = minioClient.listObjects(ListObjectsArgs.builder()
-                .bucket(bucketName.getValue())
-                .prefix(path)
-                .build()
-        );
-
-        return findItem(resultItems, directoryName, true)
-                .map(minioObjectMapper::toStorageObjectInfo);
     }
 
     @Override
@@ -251,13 +233,8 @@ public class MinioStorageService implements SimpleStorageService {
     }
 
     @Override
-    public boolean fileExists(BucketName bucketName, String path) {
-        return findFileInfo(bucketName, path).isPresent();
-    }
-
-    @Override
-    public boolean directoryExists(BucketName bucketName, String path) {
-        return findDirectoryInfo(bucketName, path).isPresent();
+    public boolean objectExists(BucketName bucketName, String path) {
+        return findObjectInfo(bucketName, path).isPresent();
     }
 
     @Override
@@ -325,27 +302,5 @@ public class MinioStorageService implements SimpleStorageService {
         }
 
         return foundObjectsInfo;
-    }
-
-    @SneakyThrows
-    private Optional<Item> findItem(Iterable<Result<Item>> resultItems, String resourceName, boolean isDirectory) {
-        for (var resultItem : resultItems) {
-            var item = resultItem.get();
-            var itemResourceName = PathUtil.extractResourceName(item.objectName());
-
-            if (!itemResourceName.equals(resourceName)) {
-                continue;
-            }
-
-            if (item.isDir() && isDirectory) {
-                return Optional.of(item);
-            }
-
-            if (!item.isDir() && !isDirectory) {
-                return Optional.of(item);
-            }
-        }
-
-        return Optional.empty();
     }
 }

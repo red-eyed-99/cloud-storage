@@ -31,17 +31,15 @@ public class ResourceService {
     public ResourceResponseDto getResource(UUID userId, String path) {
         var resourcePath = ResourcePathUtil.createUserResourcePath(userId, path);
 
-        var storageObjectInfo = (StorageObjectInfo) null;
+        var storageObjectInfo = storageService.findObjectInfo(BucketName.USER_FILES, resourcePath);
 
-        if (PathUtil.isDirectory(path)) {
-            storageObjectInfo = storageService.findDirectoryInfo(BucketName.USER_FILES, resourcePath)
-                    .orElseThrow(() -> new ResourceNotFoundException(ResourceType.DIRECTORY));
-        } else {
-            storageObjectInfo = storageService.findFileInfo(BucketName.USER_FILES, resourcePath)
-                    .orElseThrow(() -> new ResourceNotFoundException(ResourceType.FILE));
+        if (storageObjectInfo.isEmpty()) {
+            throw PathUtil.isDirectory(path)
+                    ? new ResourceNotFoundException(ResourceType.DIRECTORY)
+                    : new ResourceNotFoundException(ResourceType.FILE);
         }
 
-        return resourceMapper.toResourceResponseDto(storageObjectInfo);
+        return resourceMapper.toResourceResponseDto(storageObjectInfo.get());
     }
 
     public void deleteResource(UUID userId, String path) {
@@ -57,7 +55,7 @@ public class ResourceService {
     public List<ResourceResponseDto> getDirectoryContent(UUID userId, String path) {
         var directoryPath = ResourcePathUtil.createUserResourcePath(userId, path);
 
-        if (!storageService.directoryExists(BucketName.USER_FILES, directoryPath)) {
+        if (!storageService.objectExists(BucketName.USER_FILES, directoryPath)) {
             throw new ResourceNotFoundException(ResourceType.DIRECTORY);
         }
 
@@ -69,13 +67,13 @@ public class ResourceService {
     public ResourceResponseDto createDirectory(UUID userId, String path) {
         var directoryPath = ResourcePathUtil.createUserResourcePath(userId, path);
 
-        if (storageService.directoryExists(BucketName.USER_FILES, directoryPath)) {
+        if (storageService.objectExists(BucketName.USER_FILES, directoryPath)) {
             throw new ResourceAlreadyExistsException(ResourceType.DIRECTORY);
         }
 
         var parentDirectoryPath = PathUtil.removeResourceName(directoryPath);
 
-        if (!storageService.directoryExists(BucketName.USER_FILES, parentDirectoryPath)) {
+        if (!storageService.objectExists(BucketName.USER_FILES, parentDirectoryPath)) {
             throw new ResourceNotFoundException("Parent directory does not exist.");
         }
 
@@ -132,7 +130,7 @@ public class ResourceService {
     private void checkFileNotExists(String userFilesPath, String filePath) {
         var path = userFilesPath + filePath;
 
-        var fileExists = storageService.fileExists(BucketName.USER_FILES, path);
+        var fileExists = storageService.objectExists(BucketName.USER_FILES, path);
 
         if (fileExists) {
             throw new ResourceAlreadyExistsException(ResourceType.FILE);
@@ -140,7 +138,7 @@ public class ResourceService {
     }
 
     private StorageObjectInfo createRootDirectory(String rootDirectoryPath) {
-        if (storageService.directoryExists(BucketName.USER_FILES, rootDirectoryPath)) {
+        if (storageService.objectExists(BucketName.USER_FILES, rootDirectoryPath)) {
             throw new ResourceAlreadyExistsException(ResourceType.DIRECTORY);
         }
 
@@ -157,7 +155,7 @@ public class ResourceService {
         while (!parentDirectoryPath.equals(userFilesPath)) {
 
             if (!checkedDirectoriesPaths.contains(parentDirectoryPath)) {
-                var directoryExists = storageService.directoryExists(BucketName.USER_FILES, parentDirectoryPath);
+                var directoryExists = storageService.objectExists(BucketName.USER_FILES, parentDirectoryPath);
 
                 if (!directoryExists) {
                     var directoryInfo = storageService.createDirectory(BucketName.USER_FILES, parentDirectoryPath);
@@ -184,7 +182,7 @@ public class ResourceService {
     }
 
     private StreamingResponseBody downloadDirectory(String path) {
-        if (!storageService.directoryExists(BucketName.USER_FILES, path)) {
+        if (!storageService.objectExists(BucketName.USER_FILES, path)) {
             throw new ResourceNotFoundException(ResourceType.DIRECTORY);
         }
 
@@ -196,7 +194,7 @@ public class ResourceService {
     }
 
     private StreamingResponseBody downloadFile(String path) {
-        if (!storageService.fileExists(BucketName.USER_FILES, path)) {
+        if (!storageService.objectExists(BucketName.USER_FILES, path)) {
             throw new ResourceNotFoundException(ResourceType.FILE);
         }
 
@@ -219,32 +217,40 @@ public class ResourceService {
     }
 
     private ResourceResponseDto moveDirectory(String fromPath, String toPath) {
-        storageService.findDirectoryInfo(BucketName.USER_FILES, fromPath)
+        storageService.findObjectInfo(BucketName.USER_FILES, fromPath)
                 .orElseThrow(() -> new ResourceNotFoundException(ResourceType.DIRECTORY));
 
-        if (storageService.directoryExists(BucketName.USER_FILES, toPath)) {
+        if (storageService.objectExists(BucketName.USER_FILES, toPath)) {
             throw new ResourceAlreadyExistsException(ResourceType.DIRECTORY);
         }
 
         storageService.moveDirectory(BucketName.USER_FILES, fromPath, toPath);
 
         var directoryPath = ResourcePathUtil.removeUserFolder(toPath);
+
+        directoryPath = PathUtil.removeResourceName(directoryPath);
+        directoryPath = directoryPath.isEmpty() ? PathUtil.PATH_DELIMITER : directoryPath;
+
         var directoryName = PathUtil.extractResourceName(toPath);
 
         return new ResourceResponseDto(directoryPath, directoryName, null, ResourceType.DIRECTORY);
     }
 
     private ResourceResponseDto moveFile(String fromPath, String toPath) {
-        var fileInfo = storageService.findFileInfo(BucketName.USER_FILES, fromPath)
+        var fileInfo = storageService.findObjectInfo(BucketName.USER_FILES, fromPath)
                 .orElseThrow(() -> new ResourceNotFoundException(ResourceType.FILE));
 
-        if (storageService.fileExists(BucketName.USER_FILES, toPath)) {
+        if (storageService.objectExists(BucketName.USER_FILES, toPath)) {
             throw new ResourceAlreadyExistsException(ResourceType.FILE);
         }
 
         storageService.moveFile(BucketName.USER_FILES, fromPath, toPath);
 
         var filePath = ResourcePathUtil.removeUserFolder(toPath);
+
+        filePath = PathUtil.removeResourceName(filePath);
+        filePath = filePath.isEmpty() ? PathUtil.PATH_DELIMITER : filePath;
+
         var fileName = PathUtil.extractResourceName(toPath);
 
         return new ResourceResponseDto(filePath, fileName, fileInfo.size(), ResourceType.FILE);
