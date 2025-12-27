@@ -17,10 +17,8 @@ public class DownloadDirectoryArgumentsProvider implements ArgumentsProvider {
         return Stream.of(
                 getFolderOneArguments(),
                 getFolderTwoArguments(),
-                Arguments.of(
-                        ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3, List.of(ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3)
-                ),
-                Arguments.of(ResourcePaths.FOLDER_4, List.of(ResourcePaths.FOLDER_4))
+                getFolderThreeArguments(),
+                getFolderFourArguments()
         );
     }
 
@@ -48,6 +46,18 @@ public class DownloadDirectoryArgumentsProvider implements ArgumentsProvider {
                 ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3
         );
 
+        return Arguments.of(path, resourcePaths);
+    }
+
+    private Arguments getFolderThreeArguments() {
+        var path = ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3;
+        var resourcePaths = List.of(ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3);
+        return Arguments.of(path, resourcePaths);
+    }
+
+    private Arguments getFolderFourArguments() {
+        var path = ResourcePaths.FOLDER_4;
+        var resourcePaths = List.of(ResourcePaths.FOLDER_4);
         return Arguments.of(path, resourcePaths);
     }
 }
