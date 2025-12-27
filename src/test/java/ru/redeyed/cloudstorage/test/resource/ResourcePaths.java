@@ -14,5 +14,6 @@ public class ResourcePaths {
     public static final String FOLDER_1_FOLDER_2_FILE_3_TXT = "folder-1/folder-2/file-3.txt";
     public static final String FOLDER_1_FOLDER_2_FOLDER_3 = "folder-1/folder-2/folder-3/";
     public static final String FOLDER_4 = "folder-4/";
+    public static final String FOLDER_5 = "folder-5/";
     public static final String FOLDER_5_FOLDER_1 = "folder-5/folder1/";
 }

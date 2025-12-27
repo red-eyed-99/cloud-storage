@@ -28,6 +28,7 @@ public class ResourceManager {
             ResourcePaths.FOLDER_1_FOLDER_2_FILE_3_TXT,
             ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3,
             ResourcePaths.FOLDER_4,
+            ResourcePaths.FOLDER_5,
             ResourcePaths.FOLDER_5_FOLDER_1
     );
 

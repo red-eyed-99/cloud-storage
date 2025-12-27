@@ -20,6 +20,7 @@ import ru.redeyed.cloudstorage.s3.SimpleStorageService;
 import ru.redeyed.cloudstorage.test.auth.session.RedisSessionManager;
 import ru.redeyed.cloudstorage.test.integration.BaseIntegrationTest;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.ResourceAlreadyExistsArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.SearchResourcesByQueryArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.DownloadDirectoryArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.GetDirectoryInfoArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.MoveDirectoryArgumentsProvider;
@@ -534,6 +535,56 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                             .cookie(guestSessionInfo.cookie())
                             .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, "dummy")
                             .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, "dummy"))
+                    .andExpect(status().isUnauthorized());
+        }
+    }
+
+    @Nested
+    @DisplayName("Search for resources")
+    class SearchResourcesTests {
+
+        @ParameterizedTest
+        @DisplayName("Search resources by query")
+        @ArgumentsSource(SearchResourcesByQueryArgumentsProvider.class)
+        void shouldFindResourcesInfo(String query, String expectedResponseJson) throws Exception {
+            resourceManager.createDefaultResources();
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            var actualResponseJson = mockMvc.perform(get(ApiUtil.SEARCH_RESOURCE_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_QUERY_NAME, query))
+                    .andExpect(status().isOk())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            assertEquals(expectedResponseJson, actualResponseJson);
+        }
+
+        @ParameterizedTest
+        @DisplayName("Invalid 'query' parameter")
+        @CsvFileSource(resources = "/data/invalid-search-query-parameters.csv")
+        void shouldReturnBadRequest(String query) throws Exception {
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(get(ApiUtil.SEARCH_RESOURCE_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_QUERY_NAME, query))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("User unauthorized")
+        void shouldReturnUnauthorized() throws Exception {
+            var guestSession = redisSessionManager.createGuestSession();
+            var guestSessionInfo = redisSessionManager.getSessionInfo(guestSession);
+
+            mockMvc.perform(get(ApiUtil.SEARCH_RESOURCE_URL)
+                            .cookie(guestSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_QUERY_NAME, "dummy"))
                     .andExpect(status().isUnauthorized());
         }
     }

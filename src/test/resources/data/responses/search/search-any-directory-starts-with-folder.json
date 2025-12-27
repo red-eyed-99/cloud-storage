@@ -1,0 +1,32 @@
+[
+  {
+    "path": "/",
+    "name": "folder-1",
+    "type": "DIRECTORY"
+  },
+  {
+    "path": "folder-1/",
+    "name": "folder-2",
+    "type": "DIRECTORY"
+  },
+  {
+    "path": "folder-1/folder-2/",
+    "name": "folder-3",
+    "type": "DIRECTORY"
+  },
+  {
+    "path": "/",
+    "name": "folder-4",
+    "type": "DIRECTORY"
+  },
+  {
+    "path": "/",
+    "name": "folder-5",
+    "type": "DIRECTORY"
+  },
+  {
+    "path": "folder-5/",
+    "name": "folder1",
+    "type": "DIRECTORY"
+  }
+]
