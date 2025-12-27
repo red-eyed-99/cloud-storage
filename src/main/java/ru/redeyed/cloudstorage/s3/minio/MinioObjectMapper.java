@@ -14,7 +14,7 @@ public abstract class MinioObjectMapper {
     @Mapping(target = "path", expression = "java(item.objectName())")
     @Mapping(target = "name", source = "item", qualifiedByName = "getName")
     @Mapping(target = "size", expression = "java(item.size())")
-    @Mapping(target = "isDirectory", expression = "java(item.isDir())")
+    @Mapping(target = "isDirectory", source = "item", qualifiedByName = "isDirectory")
     public abstract StorageObjectInfo toStorageObjectInfo(Item item);
 
     @Mapping(target = "path", expression = "java(statObjectResponse.object())")
@@ -36,5 +36,10 @@ public abstract class MinioObjectMapper {
     @Named("isDirectory")
     protected boolean isDirectory(StatObjectResponse statObjectResponse) {
         return PathUtil.isDirectory(statObjectResponse.object());
+    }
+
+    @Named("isDirectory")
+    protected boolean isDirectory(Item item) {
+        return PathUtil.isDirectory(item.objectName());
     }
 }
