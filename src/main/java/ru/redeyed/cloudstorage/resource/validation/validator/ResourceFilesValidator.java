@@ -40,11 +40,13 @@ public class ResourceFilesValidator extends BaseConstraintValidator<ValidResourc
         for (var file : files) {
             var filePath = Objects.requireNonNull(file.getOriginalFilename());
 
-            if (commonRootDirectoryName == null && !PathUtil.isFileName(filePath)) {
-                commonRootDirectoryName = PathUtil.extractRootParentDirectoryName(filePath);
+            if (commonRootDirectoryName == null) {
+                commonRootDirectoryName = !PathUtil.isFileName(filePath)
+                        ? PathUtil.extractRootParentDirectoryName(filePath)
+                        : PathUtil.PATH_DELIMITER;
             }
 
-            if (file != files.getFirst()) {
+            if (file != files.getFirst() && !PathUtil.isRootDirectory(commonRootDirectoryName)) {
                 if (!isRootDirectoryValid(filePath, commonRootDirectoryName, context)) {
                     return false;
                 }
