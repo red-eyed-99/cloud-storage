@@ -25,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -99,18 +100,19 @@ public class MinioStorageService implements SimpleStorageService {
 
         try {
             for (var file : files) {
-                var filePath = file.getOriginalFilename();
+                var filePath = Objects.requireNonNull(file.getOriginalFilename());
+                var fullPath = rootPath + filePath;
 
                 executor.submit(() -> minioClient.putObject(PutObjectArgs.builder()
                         .bucket(bucketName.getValue())
-                        .object(rootPath + filePath)
+                        .object(fullPath)
                         .stream(file.getInputStream(), file.getSize(), -1)
                         .build()
                 ));
 
                 var fileName = PathUtil.extractResourceName(filePath);
 
-                var uploadedFileInfo = new StorageObjectInfo(filePath, fileName, file.getSize(), false);
+                var uploadedFileInfo = new StorageObjectInfo(fullPath, fileName, file.getSize(), false);
 
                 uploadedFilesInfo.add(uploadedFileInfo);
             }
