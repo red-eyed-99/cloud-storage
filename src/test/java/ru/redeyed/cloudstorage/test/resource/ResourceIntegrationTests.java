@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.redeyed.cloudstorage.resource.ResourcePathUtil;
 import ru.redeyed.cloudstorage.resource.ResourceType;
@@ -21,6 +22,8 @@ import ru.redeyed.cloudstorage.test.auth.session.RedisSessionManager;
 import ru.redeyed.cloudstorage.test.integration.BaseIntegrationTest;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.ResourceAlreadyExistsArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.SearchResourcesByQueryArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.UploadExistingResourceArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.UploadResourcesArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.DownloadDirectoryArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.GetDirectoryInfoArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.MoveDirectoryArgumentsProvider;
@@ -43,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -585,6 +589,81 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
             mockMvc.perform(get(ApiUtil.SEARCH_RESOURCE_URL)
                             .cookie(guestSessionInfo.cookie())
                             .queryParam(ApiUtil.REQUEST_PARAM_QUERY_NAME, "dummy"))
+                    .andExpect(status().isUnauthorized());
+        }
+    }
+
+    @Nested
+    @DisplayName("Uploading resources")
+    class UploadResourceTests {
+
+        @ParameterizedTest
+        @DisplayName("Upload resources")
+        @ArgumentsSource(UploadResourcesArgumentsProvider.class)
+        @SneakyThrows
+        void shouldUploadResources(
+                String path,
+                List<MockMultipartFile> files,
+                List<String> expectedFileExistsPaths,
+                String expectedResponseJson
+        ) {
+            resourceManager.createDefaultResources();
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            var mockMultipartRequestBuilder = multipart(ApiUtil.RESOURCE_URL);
+
+            for (var file : files) {
+                mockMultipartRequestBuilder.file(file);
+            }
+
+            var actualResponseJson = mockMvc.perform(mockMultipartRequestBuilder
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path)
+                    )
+                    .andExpect(status().isCreated())
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            for (var filePath : expectedFileExistsPaths) {
+                assertTrue(storageService.objectExists(BucketName.USER_FILES, filePath));
+            }
+
+            assertEquals(expectedResponseJson, actualResponseJson);
+        }
+
+        @ParameterizedTest
+        @DisplayName("Resource already exists")
+        @ArgumentsSource(UploadExistingResourceArgumentsProvider.class)
+        void shouldReturnConflict(String path, List<MockMultipartFile> files) throws Exception {
+            resourceManager.createDefaultResources();
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            var mockMultipartRequestBuilder = multipart(ApiUtil.RESOURCE_URL);
+
+            for (var file : files) {
+                mockMultipartRequestBuilder.file(file);
+            }
+
+            mockMvc.perform(mockMultipartRequestBuilder
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
+                    .andExpect(status().isConflict());
+        }
+
+        @Test
+        @DisplayName("User unauthorized")
+        void shouldReturnUnauthorized() throws Exception {
+            var guestSession = redisSessionManager.createGuestSession();
+            var guestSessionInfo = redisSessionManager.getSessionInfo(guestSession);
+
+            mockMvc.perform(multipart(ApiUtil.RESOURCE_URL)
+                            .cookie(guestSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, "dummy"))
                     .andExpect(status().isUnauthorized());
         }
     }
