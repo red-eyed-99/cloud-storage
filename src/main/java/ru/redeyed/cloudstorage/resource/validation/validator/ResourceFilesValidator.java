@@ -76,10 +76,6 @@ public class ResourceFilesValidator extends BaseConstraintValidator<ValidResourc
             return false;
         }
 
-        if (PathUtil.isFileName(filePath)) {
-            return true;
-        }
-
         if (ValidationUtil.isStartWith(PathUtil.PATH_DELIMITER, filePath)) {
             setCustomMessage(context, filePath + " must not start with a '" + PathUtil.PATH_DELIMITER + "' .");
             return false;
