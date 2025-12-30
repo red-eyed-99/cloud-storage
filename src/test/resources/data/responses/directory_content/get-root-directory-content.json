@@ -1,0 +1,29 @@
+[
+  {
+    "path": "/",
+    "name": "undefined-file-1",
+    "size": 3,
+    "type": "FILE"
+  },
+  {
+    "path": "/",
+    "name": "file-1.txt",
+    "size": 9,
+    "type": "FILE"
+  },
+  {
+    "path": "/",
+    "name": "folder-1",
+    "type": "DIRECTORY"
+  },
+  {
+    "path": "/",
+    "name": "folder-4",
+    "type": "DIRECTORY"
+  },
+  {
+    "path": "/",
+    "name": "folder-5",
+    "type": "DIRECTORY"
+  }
+]

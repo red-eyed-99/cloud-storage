@@ -26,6 +26,7 @@ import ru.redeyed.cloudstorage.test.resource.argumentsprovider.SearchResourcesBy
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.UploadExistingResourceArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.UploadResourcesArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.DownloadDirectoryArgumentsProvider;
+import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.GetDirectoryContentArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.GetDirectoryInfoArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.MoveDirectoryArgumentsProvider;
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.directory.RenameDirectoryArgumentsProvider;
@@ -50,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -733,6 +735,166 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                             .cookie(guestSessionInfo.cookie())
                             .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, "dummy"))
                     .andExpect(status().isUnauthorized());
+        }
+    }
+
+    @Nested
+    @DisplayName("Create empty directory")
+    class CreateEmptyDirectoryTests {
+
+        @ParameterizedTest
+        @DisplayName("Create directory")
+        @ValueSource(strings = {
+                "new-folder-1/",
+                ResourcePaths.FOLDER_1 + "new-folder-1/",
+                ResourcePaths.FOLDER_1_FOLDER_2 + "new-folder-1/"
+        })
+        void shouldCreateEmptyDirectory(String path) throws Exception {
+            resourceManager.createDefaultResources();
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(post(ApiUtil.DIRECTORY_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
+                    .andExpect(status().isCreated());
+        }
+
+        @ParameterizedTest
+        @DisplayName("Directory already exists")
+        @ValueSource(strings = {
+                ResourcePaths.FOLDER_1,
+                ResourcePaths.FOLDER_1_FOLDER_2,
+                ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3
+        })
+        void shouldReturnConflict(String path) throws Exception {
+            resourceManager.createDefaultResources();
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(post(ApiUtil.DIRECTORY_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
+                    .andExpect(status().isConflict());
+        }
+
+        @ParameterizedTest
+        @DisplayName("Parent directory doesn't exist")
+        @ValueSource(strings = {
+                "non-existent-parent/new-folder-1/",
+                ResourcePaths.FOLDER_1 + "non-existent-parent/new-folder-1/"
+        })
+        void shouldReturnNotFound(String path) throws Exception {
+            resourceManager.createDefaultResources();
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(post(ApiUtil.DIRECTORY_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
+                    .andExpect(status().isNotFound());
+        }
+
+        @ParameterizedTest
+        @DisplayName("Invalid directory path")
+        @CsvFileSource(resources = "/data/invalid-directory-path.csv")
+        void shouldReturnBadRequest(String directoryPath) throws Exception {
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(post(ApiUtil.DIRECTORY_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, directoryPath))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("User unauthorized")
+        void shouldReturnUnauthorized() throws Exception {
+            var guestSession = redisSessionManager.createGuestSession();
+            var guestSessionInfo = redisSessionManager.getSessionInfo(guestSession);
+
+            mockMvc.perform(post(ApiUtil.DIRECTORY_URL)
+                            .cookie(guestSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, "dummy"))
+                    .andExpect(status().isUnauthorized());
+        }
+    }
+
+    @Nested
+    @DisplayName("Get directory content")
+    class GetDirectoryContentTests {
+
+        @ParameterizedTest
+        @DisplayName("Get content")
+        @ArgumentsSource(GetDirectoryContentArgumentsProvider.class)
+        void shouldReturnDirectoryContent(String path, String expectedResponseJson) throws Exception {
+            resourceManager.createDefaultResources();
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(get(ApiUtil.DIRECTORY_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(expectedResponseJson));
+        }
+
+        @ParameterizedTest
+        @DisplayName("Directory doesn't exist")
+        @ValueSource(strings = {
+                "non-existent-directory/",
+                ResourcePaths.FOLDER_1 + "non-existent-directory/"
+        })
+        void shouldReturnNotFound(String path) throws Exception {
+            resourceManager.createDefaultResources();
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(get(ApiUtil.DIRECTORY_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
+                    .andExpect(status().isNotFound());
+        }
+
+        @ParameterizedTest
+        @DisplayName("Invalid directory path")
+        @CsvFileSource(resources = "/data/invalid-directory-path.csv")
+        void shouldReturnBadRequest(String directoryPath) throws Exception {
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(get(ApiUtil.DIRECTORY_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, directoryPath))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("User unauthorized")
+        void shouldReturnUnauthorized() throws Exception {
+            var guestSession = redisSessionManager.createGuestSession();
+            var guestSessionInfo = redisSessionManager.getSessionInfo(guestSession);
+
+            mockMvc.perform(get(ApiUtil.DIRECTORY_URL)
+                            .cookie(guestSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, "dummy"))
+                    .andExpect(status().isUnauthorized());
+        }
+    }
+
+    private void assertResourcesExist(List<String> expectedExistResourcePaths) {
+        for (var resourcePath : expectedExistResourcePaths) {
+            var condition = PathUtil.isDirectory(resourcePath)
+                    ? storageService.directoryExists(BucketName.USER_FILES, resourcePath)
+                    : storageService.fileExists(BucketName.USER_FILES, resourcePath);
+
+            assertTrue(condition);
         }
     }
 }

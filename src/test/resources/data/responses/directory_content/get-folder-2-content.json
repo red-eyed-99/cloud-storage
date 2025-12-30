@@ -1,0 +1,13 @@
+[
+  {
+    "path": "folder-1/folder-2/",
+    "name": "file-3.txt",
+    "size": 9,
+    "type": "FILE"
+  },
+  {
+    "path": "folder-1/folder-2/",
+    "name": "folder-3",
+    "type": "DIRECTORY"
+  }
+]

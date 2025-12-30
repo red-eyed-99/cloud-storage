@@ -14,6 +14,8 @@ public class ApiUtil {
     public static final String MOVE_RESOURCE_URL = "/api/resource/move";
     public static final String SEARCH_RESOURCE_URL = "/api/resource/search";
 
+    public static final String DIRECTORY_URL = "/api/directory";
+
     public static final String REQUEST_PARAM_PATH_NAME = "path";
     public static final String REQUEST_PARAM_FROM_PATH_NAME = "from";
     public static final String REQUEST_PARAM_TO_PATH_NAME = "to";
