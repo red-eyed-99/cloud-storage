@@ -8,7 +8,9 @@ import java.util.zip.ZipOutputStream;
 
 public interface SimpleStorageService {
 
-    Optional<StorageObjectInfo> findObjectInfo(BucketName bucketName, String path);
+    Optional<StorageObjectInfo> findFileInfo(BucketName bucketName, String path);
+
+    Optional<StorageObjectInfo> findDirectoryInfo(BucketName bucketName, String path);
 
     List<StorageObjectInfo> getDirectoryObjectsInfo(BucketName bucketName, String path, boolean recursive);
 
@@ -28,7 +30,9 @@ public interface SimpleStorageService {
 
     void removeDirectory(BucketName bucketName, String path);
 
-    boolean objectExists(BucketName bucketName, String path);
+    boolean fileExists(BucketName bucketName, String path);
+
+    boolean directoryExists(BucketName bucketName, String path);
 
     List<StorageObjectInfo> search(BucketName bucketName, String path, String pattern);
 }

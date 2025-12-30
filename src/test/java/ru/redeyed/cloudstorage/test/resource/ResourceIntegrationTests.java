@@ -182,7 +182,7 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                             .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
                     .andExpect(status().isNoContent());
 
-            assertFalse(storageService.objectExists(BucketName.USER_FILES, userFilePath));
+            assertFalse(storageService.fileExists(BucketName.USER_FILES, userFilePath));
         }
 
         @ParameterizedTest
@@ -204,7 +204,7 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                             .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
                     .andExpect(status().isNoContent());
 
-            assertFalse(storageService.objectExists(BucketName.USER_FILES, userDirectoryPath));
+            assertFalse(storageService.directoryExists(BucketName.USER_FILES, userDirectoryPath));
         }
 
         @ParameterizedTest
@@ -378,8 +378,8 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                     );
 
             assertAll(
-                    () -> assertFalse(storageService.objectExists(BucketName.USER_FILES, userFileFromPath)),
-                    () -> assertTrue(storageService.objectExists(BucketName.USER_FILES, userFileToPath))
+                    () -> assertFalse(storageService.fileExists(BucketName.USER_FILES, userFileFromPath)),
+                    () -> assertTrue(storageService.fileExists(BucketName.USER_FILES, userFileToPath))
             );
         }
 
@@ -412,8 +412,8 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                     );
 
             assertAll(
-                    () -> assertFalse(storageService.objectExists(BucketName.USER_FILES, userFileFromPath)),
-                    () -> assertTrue(storageService.objectExists(BucketName.USER_FILES, userFileToPath))
+                    () -> assertFalse(storageService.fileExists(BucketName.USER_FILES, userFileFromPath)),
+                    () -> assertTrue(storageService.fileExists(BucketName.USER_FILES, userFileToPath))
             );
         }
 
@@ -449,6 +449,8 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
             for (var resourcePath : expectedExistResourcePaths) {
                 assertTrue(storageService.objectExists(BucketName.USER_FILES, resourcePath));
             }
+            assertFalse(storageService.directoryExists(BucketName.USER_FILES, userOldDirectoryPath));
+            assertResourcesExist(expectedExistResourcePaths);
         }
 
         @ParameterizedTest
@@ -478,11 +480,8 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                             jsonPath("$.type").value(ResourceType.DIRECTORY.toString())
                     );
 
-            assertFalse(storageService.objectExists(BucketName.USER_FILES, userOldDirectoryPath));
-
-            for (var resourcePath : expectedExistResourcePaths) {
-                assertTrue(storageService.objectExists(BucketName.USER_FILES, resourcePath));
-            }
+            assertFalse(storageService.directoryExists(BucketName.USER_FILES, userOldDirectoryPath));
+            assertResourcesExist(expectedExistResourcePaths);
         }
 
         @ParameterizedTest
@@ -650,11 +649,7 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                     .getResponse()
                     .getContentAsString();
 
-            for (var filePath : expectedFileExistsPaths) {
-                assertTrue(storageService.objectExists(BucketName.USER_FILES, filePath));
-            }
-
-            assertEquals(expectedResponseJson, actualResponseJson);
+            assertResourcesExist(expectedFileExistsPaths);
         }
 
         @ParameterizedTest
