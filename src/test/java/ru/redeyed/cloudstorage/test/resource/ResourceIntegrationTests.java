@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.resource.ResourcePathUtil;
 import ru.redeyed.cloudstorage.resource.ResourceType;
 import ru.redeyed.cloudstorage.s3.BucketName;
@@ -34,8 +35,10 @@ import ru.redeyed.cloudstorage.test.resource.argumentsprovider.file.MoveFileArgu
 import ru.redeyed.cloudstorage.test.resource.argumentsprovider.file.RenameFileArgumentsProvider;
 import ru.redeyed.cloudstorage.test.user.UserTestData;
 import ru.redeyed.cloudstorage.util.ApiUtil;
+import ru.redeyed.cloudstorage.util.MockFileCreator;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.zip.ZipInputStream;
@@ -54,6 +57,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Interaction with resources")
 @RequiredArgsConstructor
 public class ResourceIntegrationTests extends BaseIntegrationTest {
+
+    private static final int FILES_COUNT_LIMIT = 50;
 
     private final MockMvc mockMvc;
 
@@ -483,7 +488,7 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
         @ParameterizedTest
         @DisplayName("Resource already exists")
         @ArgumentsSource(ResourceAlreadyExistsArgumentsProvider.class)
-        void shouldReturnConflict(String from, String to) throws Exception {
+        void shouldReturnConflictWhenResourceAlreadyExists(String from, String to) throws Exception {
             resourceManager.createDefaultResources();
 
             var authSession = redisSessionManager.createAuthenticatedSession();
@@ -671,6 +676,64 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                             .cookie(authSessionInfo.cookie())
                             .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
                     .andExpect(status().isConflict());
+        }
+
+        @Test
+        @DisplayName("Exceed files count limit")
+        void shouldReturnBadRequestWhenFilesCountLimitExceeded() throws Exception {
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            var mockMultipartRequestBuilder = multipart(ApiUtil.RESOURCE_URL);
+
+            var files = new ArrayList<MockMultipartFile>();
+
+            for (int i = 0; i <= FILES_COUNT_LIMIT; i++) {
+                var file = MockFileCreator.createDefault("dummy-" + i);
+                files.add(file);
+            }
+
+            for (var file : files) {
+                mockMultipartRequestBuilder.file(file);
+            }
+
+            mockMvc.perform(mockMultipartRequestBuilder
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, PathUtil.PATH_DELIMITER))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @DisplayName("Files has different root parent folder")
+        void shouldReturnBadRequestWhenFilesHasDifferentRootParentFolder() throws Exception {
+            var firstFile = MockFileCreator.createDefault("parent-folder-1/file-1.txt");
+            var secondFile = MockFileCreator.createDefault("parent-folder-2/file-2.txt");
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(multipart(ApiUtil.RESOURCE_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, PathUtil.PATH_DELIMITER)
+                            .file(firstFile)
+                            .file(secondFile))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @ParameterizedTest
+        @DisplayName("Invalid file name or file path")
+        @CsvFileSource(resources = "/data/invalid-file-path.csv")
+        void shouldReturnBadRequestWhenFileNameOrFilePathIsInvalid(String filePath) throws Exception {
+            var file = MockFileCreator.createDefault(filePath);
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(multipart(ApiUtil.RESOURCE_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, PathUtil.PATH_DELIMITER)
+                            .file(file))
+                    .andExpect(status().isBadRequest());
         }
 
         @Test
