@@ -496,6 +496,24 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                     .andExpect(status().isConflict());
         }
 
+        @Test
+        @DisplayName("File extension changed")
+        void shouldReturnConflictWhenFileExtensionChanged() throws Exception {
+            var from = ResourcePaths.FILE_1_TXT;
+            var to = "file-1.mp3";
+
+            resourceManager.createDefaultResources();
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(get(ApiUtil.MOVE_RESOURCE_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_FROM_PATH_NAME, from)
+                            .queryParam(ApiUtil.REQUEST_PARAM_TO_PATH_NAME, to))
+                    .andExpect(status().isConflict());
+        }
+
         @ParameterizedTest
         @DisplayName("Resource doesn't exist")
         @CsvSource({
