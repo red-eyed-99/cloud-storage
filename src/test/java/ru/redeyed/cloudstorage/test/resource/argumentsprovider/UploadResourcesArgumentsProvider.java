@@ -34,11 +34,9 @@ public class UploadResourcesArgumentsProvider implements ArgumentsProvider {
     private Arguments getUploadFilesInRootArguments() {
         var path = PathUtil.PATH_DELIMITER;
 
-        var responseJson = JsonUtil.getJsonFrom("data/responses/upload/upload-files-in-root.json");
+        var expectedResponseJson = JsonUtil.getJsonFrom("data/responses/upload/upload-files-in-root.json");
 
-        var expectedResponseJson = JsonUtil.removeUnnecessaryCharacters(responseJson);
-
-        var resourceResponseDtos = getResourceResponseDtos(responseJson);
+        var resourceResponseDtos = getResourceResponseDtos(expectedResponseJson);
 
         var files = new ArrayList<MockMultipartFile>();
 
@@ -60,11 +58,9 @@ public class UploadResourcesArgumentsProvider implements ArgumentsProvider {
     private Arguments getUploadFilesInFolderArguments() {
         var path = ResourcePaths.FOLDER_1;
 
-        var responseJson = JsonUtil.getJsonFrom("data/responses/upload/upload-files-in-folder.json");
+        var expectedResponseJson = JsonUtil.getJsonFrom("data/responses/upload/upload-files-in-folder.json");
 
-        var expectedResponseJson = JsonUtil.removeUnnecessaryCharacters(responseJson);
-
-        var resourceResponseDtos = getResourceResponseDtos(responseJson);
+        var resourceResponseDtos = getResourceResponseDtos(expectedResponseJson);
 
         var files = new ArrayList<MockMultipartFile>();
 
@@ -86,11 +82,9 @@ public class UploadResourcesArgumentsProvider implements ArgumentsProvider {
     private Arguments getUploadDirectoryWithFilesInRootArguments() {
         var path = PathUtil.PATH_DELIMITER;
 
-        var responseJson = JsonUtil.getJsonFrom("data/responses/upload/upload-directory-with-files-in-root.json");
+        var expectedResponseJson = JsonUtil.getJsonFrom("data/responses/upload/upload-directory-with-files-in-root.json");
 
-        var expectedResponseJson = JsonUtil.removeUnnecessaryCharacters(responseJson);
-
-        var resourceResponseDtos = getResourceResponseDtos(responseJson);
+        var resourceResponseDtos = getResourceResponseDtos(expectedResponseJson);
 
         var files = new ArrayList<MockMultipartFile>();
 
@@ -119,11 +113,9 @@ public class UploadResourcesArgumentsProvider implements ArgumentsProvider {
     private Arguments getUploadDirectoryWithFilesInFolderArguments() {
         var path = ResourcePaths.FOLDER_1;
 
-        var responseJson = JsonUtil.getJsonFrom("data/responses/upload/upload-directory-with-files-in-folder.json");
+        var expectedResponseJson = JsonUtil.getJsonFrom("data/responses/upload/upload-directory-with-files-in-folder.json");
 
-        var expectedResponseJson = JsonUtil.removeUnnecessaryCharacters(responseJson);
-
-        var resourceResponseDtos = getResourceResponseDtos(responseJson);
+        var resourceResponseDtos = getResourceResponseDtos(expectedResponseJson);
 
         var files = new ArrayList<MockMultipartFile>();
 

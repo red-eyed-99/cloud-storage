@@ -444,11 +444,6 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                             jsonPath("$.type").value(ResourceType.DIRECTORY.toString())
                     );
 
-            assertFalse(storageService.objectExists(BucketName.USER_FILES, userOldDirectoryPath));
-
-            for (var resourcePath : expectedExistResourcePaths) {
-                assertTrue(storageService.objectExists(BucketName.USER_FILES, resourcePath));
-            }
             assertFalse(storageService.directoryExists(BucketName.USER_FILES, userOldDirectoryPath));
             assertResourcesExist(expectedExistResourcePaths);
         }
@@ -578,15 +573,13 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
             var authSession = redisSessionManager.createAuthenticatedSession();
             var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
 
-            var actualResponseJson = mockMvc.perform(get(ApiUtil.SEARCH_RESOURCE_URL)
+            mockMvc.perform(get(ApiUtil.SEARCH_RESOURCE_URL)
                             .cookie(authSessionInfo.cookie())
                             .queryParam(ApiUtil.REQUEST_PARAM_QUERY_NAME, query))
-                    .andExpect(status().isOk())
-                    .andReturn()
-                    .getResponse()
-                    .getContentAsString();
-
-            assertEquals(expectedResponseJson, actualResponseJson);
+                    .andExpectAll(
+                            status().isOk(),
+                            content().json(expectedResponseJson)
+                    );
         }
 
         @ParameterizedTest
@@ -640,14 +633,13 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
                 mockMultipartRequestBuilder.file(file);
             }
 
-            var actualResponseJson = mockMvc.perform(mockMultipartRequestBuilder
+            mockMvc.perform(mockMultipartRequestBuilder
                             .cookie(authSessionInfo.cookie())
-                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path)
-                    )
-                    .andExpect(status().isCreated())
-                    .andReturn()
-                    .getResponse()
-                    .getContentAsString();
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
+                    .andExpectAll(
+                            status().isCreated(),
+                            content().json(expectedResponseJson)
+                    );
 
             assertResourcesExist(expectedFileExistsPaths);
         }
