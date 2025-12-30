@@ -286,7 +286,7 @@ public class MinioStorageService implements SimpleStorageService {
         var directoryObjectsInfo = getDirectoryObjectsInfo(bucketName, oldPath, true);
 
         for (var objectInfo : directoryObjectsInfo) {
-            var pathFromDirectory = PathUtil.extractPathFrom(directoryName, objectInfo.path());
+            var pathFromDirectory = PathUtil.extractPathFromDirectory(directoryName, objectInfo.path());
             var pathWithoutParentDirectory = PathUtil.removeRootParentDirectory(pathFromDirectory);
 
             minioClient.copyObject(CopyObjectArgs.builder()

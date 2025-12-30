@@ -12,9 +12,26 @@ public class PathUtil {
 
     private static final int CHARACTER_NOT_PRESENT = -1;
 
-    public static String extractPathFrom(String value, String path) {
-        var startIndex = path.indexOf(value);
-        return path.substring(startIndex);
+    public static String extractPathFromDirectory(String directoryName, String path) {
+        var initialPath = path;
+
+        while (!path.isEmpty()) {
+            if (!isDirectory(path)) {
+                path = removeResourceName(path);
+                continue;
+            }
+
+            var resourceName = extractResourceName(path);
+
+            if (resourceName.equals(directoryName)) {
+                var index = path.indexOf(resourceName + PATH_DELIMITER);
+                return initialPath.substring(index);
+            }
+
+            path = removeResourceName(path);
+        }
+
+        return EMPTY_VALUE;
     }
 
     public static String extractResourceName(String path) {
