@@ -1,4 +1,6 @@
-package ru.redeyed.cloudstorage.resource;
+package ru.redeyed.cloudstorage.resource.exception;
+
+import ru.redeyed.cloudstorage.resource.ResourceType;
 
 public class ResourceAlreadyExistsException extends RuntimeException {
 

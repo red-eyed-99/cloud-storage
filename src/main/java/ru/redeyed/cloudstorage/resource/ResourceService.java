@@ -7,6 +7,8 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.common.util.RegexpUtil;
 import ru.redeyed.cloudstorage.resource.dto.ResourceResponseDto;
+import ru.redeyed.cloudstorage.resource.exception.ResourceAlreadyExistsException;
+import ru.redeyed.cloudstorage.resource.exception.ResourceNotFoundException;
 import ru.redeyed.cloudstorage.s3.BucketName;
 import ru.redeyed.cloudstorage.s3.SimpleStorageService;
 import ru.redeyed.cloudstorage.s3.StorageObjectInfo;
