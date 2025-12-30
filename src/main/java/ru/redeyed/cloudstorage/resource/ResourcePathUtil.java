@@ -45,4 +45,8 @@ public class ResourcePathUtil {
     public static boolean hasUserFolder(String path) {
         return USER_FILES_DIR_PATTERN.matcher(path).find();
     }
+
+    public static boolean isUserFolder(String path) {
+        return USER_FILES_DIR_PATTERN.matcher(path).matches();
+    }
 }

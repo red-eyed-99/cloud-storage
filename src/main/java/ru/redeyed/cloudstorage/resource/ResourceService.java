@@ -60,9 +60,10 @@ public class ResourceService {
     public List<ResourceResponseDto> getDirectoryContent(UUID userId, String path) {
         var directoryPath = ResourcePathUtil.createUserResourcePath(userId, path);
 
-        if (!storageService.objectExists(BucketName.USER_FILES, directoryPath)) {
-            throw new ResourceNotFoundException(ResourceType.DIRECTORY);
         if (!storageService.directoryExists(BucketName.USER_FILES, directoryPath)) {
+            if (!ResourcePathUtil.isUserFolder(directoryPath)) {
+                throw new ResourceNotFoundException(ResourceType.DIRECTORY);
+            }
         }
 
         var storageObjectsInfo = storageService.getDirectoryObjectsInfo(BucketName.USER_FILES, directoryPath, false);
@@ -79,9 +80,10 @@ public class ResourceService {
 
         var parentDirectoryPath = PathUtil.removeResourceName(directoryPath);
 
-        if (!storageService.objectExists(BucketName.USER_FILES, parentDirectoryPath)) {
-            throw new ResourceNotFoundException("Parent directory does not exist.");
         if (!storageService.directoryExists(BucketName.USER_FILES, parentDirectoryPath)) {
+            if (!ResourcePathUtil.isUserFolder(parentDirectoryPath)) {
+                throw new ResourceNotFoundException("Parent directory does not exist.");
+            }
         }
 
         storageService.createDirectory(BucketName.USER_FILES, directoryPath);
