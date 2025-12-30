@@ -118,16 +118,16 @@ public class PathUtil {
         return path.substring(beginIndex, endIndex);
     }
 
-    public static FileExtension extractFileExtension(String path) {
+    public static String extractFileExtension(String path) {
         var lastDotIndex = path.lastIndexOf(EXTENSION_DELIMITER);
 
         if (lastDotIndex == CHARACTER_NOT_PRESENT) {
-            return FileExtension.UNDEFINED;
+            return EMPTY_VALUE;
         }
 
         var beginIndex = lastDotIndex + EXTENSION_DELIMITER.length();
 
-        return FileExtension.fromString(path.substring(beginIndex));
+        return path.substring(beginIndex);
     }
 
     public static String trimLastSlash(String path) {

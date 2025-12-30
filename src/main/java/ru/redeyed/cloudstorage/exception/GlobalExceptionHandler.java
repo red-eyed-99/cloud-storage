@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import ru.redeyed.cloudstorage.common.util.DataUnit;
 import ru.redeyed.cloudstorage.resource.dto.MaxFileSizeErrorResponseDto;
+import ru.redeyed.cloudstorage.resource.exception.FileExtensionChangedException;
 import ru.redeyed.cloudstorage.resource.exception.ResourceAlreadyExistsException;
 import ru.redeyed.cloudstorage.resource.exception.ResourceNotFoundException;
 import ru.redeyed.cloudstorage.user.UserAlreadyExistsException;
@@ -34,6 +35,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({UserAlreadyExistsException.class, ResourceAlreadyExistsException.class})
     public ResponseEntity<ErrorResponseDto> handle(RuntimeException exception) {
+        return getErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(FileExtensionChangedException.class)
+    public ResponseEntity<ErrorResponseDto> handle(FileExtensionChangedException exception) {
         return getErrorResponse(HttpStatus.CONFLICT, exception.getMessage());
     }
 

@@ -7,6 +7,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.common.util.RegexpUtil;
 import ru.redeyed.cloudstorage.resource.dto.ResourceResponseDto;
+import ru.redeyed.cloudstorage.resource.exception.FileExtensionChangedException;
 import ru.redeyed.cloudstorage.resource.exception.ResourceAlreadyExistsException;
 import ru.redeyed.cloudstorage.resource.exception.ResourceNotFoundException;
 import ru.redeyed.cloudstorage.s3.BucketName;
@@ -242,6 +243,10 @@ public class ResourceService {
         var fileInfo = storageService.findObjectInfo(BucketName.USER_FILES, fromPath)
                 .orElseThrow(() -> new ResourceNotFoundException(ResourceType.FILE));
 
+        if (fileExtensionChanged(fromPath, toPath)) {
+            throw new FileExtensionChangedException();
+        }
+
         if (storageService.objectExists(BucketName.USER_FILES, toPath)) {
             throw new ResourceAlreadyExistsException(ResourceType.FILE);
         }
@@ -256,6 +261,12 @@ public class ResourceService {
         var fileName = PathUtil.extractResourceName(toPath);
 
         return new ResourceResponseDto(filePath, fileName, fileInfo.size(), ResourceType.FILE);
+    }
+
+    private boolean fileExtensionChanged(String fromPath, String toPath) {
+        var fromFileExtension = PathUtil.extractFileExtension(fromPath);
+        var toFileExtension = PathUtil.extractFileExtension(toPath);
+        return !fromFileExtension.equals(toFileExtension);
     }
 
     public List<ResourceResponseDto> search(UUID userId, String query) {
