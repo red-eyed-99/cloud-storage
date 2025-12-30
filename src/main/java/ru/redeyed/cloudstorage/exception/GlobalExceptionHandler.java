@@ -3,7 +3,6 @@ package ru.redeyed.cloudstorage.exception;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.http.fileupload.impl.FileCountLimitExceededException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +15,9 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import ru.redeyed.cloudstorage.common.util.DataUnit;
-import ru.redeyed.cloudstorage.resource.ResourceAlreadyExistsException;
-import ru.redeyed.cloudstorage.resource.ResourceNotFoundException;
-import ru.redeyed.cloudstorage.resource.dto.FileCountLimitErrorResponseDto;
 import ru.redeyed.cloudstorage.resource.dto.MaxFileSizeErrorResponseDto;
+import ru.redeyed.cloudstorage.resource.exception.ResourceAlreadyExistsException;
+import ru.redeyed.cloudstorage.resource.exception.ResourceNotFoundException;
 import ru.redeyed.cloudstorage.user.UserAlreadyExistsException;
 
 @RestControllerAdvice
@@ -100,12 +98,6 @@ public class GlobalExceptionHandler {
         }
 
         return false;
-    }
-
-    @ExceptionHandler(FileCountLimitExceededException.class)
-    public ResponseEntity<FileCountLimitErrorResponseDto> handle(FileCountLimitExceededException exception) {
-        var responseDto = new FileCountLimitErrorResponseDto(exception.getMessage(), exception.getLimit());
-        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(responseDto);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

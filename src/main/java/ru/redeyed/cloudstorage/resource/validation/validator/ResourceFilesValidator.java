@@ -1,8 +1,6 @@
 package ru.redeyed.cloudstorage.resource.validation.validator;
 
 import jakarta.validation.ConstraintValidatorContext;
-import lombok.SneakyThrows;
-import org.apache.tomcat.util.http.fileupload.impl.FileCountLimitExceededException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
@@ -16,7 +14,7 @@ import java.util.regex.Pattern;
 public class ResourceFilesValidator extends BaseConstraintValidator<ValidResourceFiles, List<MultipartFile>> {
 
     @Value("${multipart-files-count-limit}")
-    private long filesCountLimit;
+    private int filesCountLimit;
 
     private static final String PATTERN = "^[^\\\\:*?\"<>|]+$";
 
@@ -29,10 +27,10 @@ public class ResourceFilesValidator extends BaseConstraintValidator<ValidResourc
     }
 
     @Override
-    @SneakyThrows
     public boolean isValid(List<MultipartFile> files, ConstraintValidatorContext context) {
         if (files.size() > filesCountLimit) {
-            throw new FileCountLimitExceededException("Too many files.", filesCountLimit);
+            setCustomMessage(context, "Too many files. Max - " + filesCountLimit + ".");
+            return false;
         }
 
         var commonRootDirectoryName = (String) null;
