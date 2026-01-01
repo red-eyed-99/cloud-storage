@@ -20,12 +20,13 @@ import ru.redeyed.cloudstorage.auth.dto.SignUpRequestDto;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-public class AuthController {
+public class AuthController implements AuthApi {
 
     private final AuthService authService;
 
     private final SecurityContextRepository securityContextRepository;
 
+    @Override
     @PostMapping("/sign-up")
     public ResponseEntity<AuthResponseDto> signUp(@Valid @RequestBody SignUpRequestDto signUpRequestDto,
                                                   HttpServletRequest request, HttpServletResponse response) {
@@ -42,6 +43,7 @@ public class AuthController {
                 .body(authResponseDto);
     }
 
+    @Override
     @PostMapping("/sign-in")
     public ResponseEntity<AuthResponseDto> signIn(@Valid @RequestBody SignInRequestDto signInRequestDto,
                                                   HttpServletRequest request, HttpServletResponse response) {
@@ -56,6 +58,7 @@ public class AuthController {
         return ResponseEntity.ok(authResponseDto);
     }
 
+    @Override
     @PostMapping("/sign-out")
     public ResponseEntity<Void> signOut(HttpServletRequest request) {
         invalidateExistingSession(request);

@@ -10,7 +10,7 @@ import ru.redeyed.cloudstorage.user.dto.UserResponseDto;
 
 @RestController
 @RequestMapping("/api/user")
-public class UserController {
+public class UserController implements UserApi {
 
     @GetMapping("/me")
     public ResponseEntity<UserResponseDto> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
