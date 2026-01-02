@@ -28,9 +28,10 @@ public class AuthController implements AuthApi {
 
     @Override
     @PostMapping("/sign-up")
-    public ResponseEntity<AuthResponseDto> signUp(@Valid @RequestBody SignUpRequestDto signUpRequestDto,
-                                                  HttpServletRequest request, HttpServletResponse response) {
-
+    public ResponseEntity<AuthResponseDto> signUp(
+            @Valid @RequestBody SignUpRequestDto signUpRequestDto,
+            HttpServletRequest request, HttpServletResponse response
+    ) {
         var authentication = authService.signUp(signUpRequestDto);
 
         invalidateExistingSession(request);
@@ -45,9 +46,10 @@ public class AuthController implements AuthApi {
 
     @Override
     @PostMapping("/sign-in")
-    public ResponseEntity<AuthResponseDto> signIn(@Valid @RequestBody SignInRequestDto signInRequestDto,
-                                                  HttpServletRequest request, HttpServletResponse response) {
-
+    public ResponseEntity<AuthResponseDto> signIn(
+            @Valid @RequestBody SignInRequestDto signInRequestDto,
+            HttpServletRequest request, HttpServletResponse response
+    ) {
         var authentication = authService.signIn(signInRequestDto);
 
         invalidateExistingSession(request);
@@ -73,13 +75,12 @@ public class AuthController implements AuthApi {
         }
     }
 
-    private void updateSecurityContext(HttpServletRequest request, HttpServletResponse response,
-                                       Authentication authentication) {
-
+    private void updateSecurityContext(
+            HttpServletRequest request, HttpServletResponse response,
+            Authentication authentication
+    ) {
         var securityContext = SecurityContextHolder.getContext();
-
         securityContext.setAuthentication(authentication);
-
         securityContextRepository.saveContext(securityContext, request, response);
     }
 }
