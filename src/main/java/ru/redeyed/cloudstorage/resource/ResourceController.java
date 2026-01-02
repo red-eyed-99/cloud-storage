@@ -21,10 +21,7 @@ import ru.redeyed.cloudstorage.auth.UserDetailsImpl;
 import ru.redeyed.cloudstorage.common.http.ContentDispositionType;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.resource.dto.ResourceResponseDto;
-import ru.redeyed.cloudstorage.resource.validation.annotation.SameResourceType;
-import ru.redeyed.cloudstorage.resource.validation.annotation.ValidResourceFiles;
-import ru.redeyed.cloudstorage.resource.validation.annotation.ValidResourcePath;
-import ru.redeyed.cloudstorage.resource.validation.annotation.ValidSearchQuery;
+import java.nio.charset.Charset;
 import java.util.List;
 
 @RestController
@@ -67,11 +64,7 @@ public class ResourceController implements ResourceApi {
     ) {
         var streamingResponseBody = resourceService.downloadResource(userDetails.getId(), path);
 
-        var contentDispositionType = ContentDispositionType.ATTACHMENT.getValue();
-
-        var contentDisposition = ContentDisposition.builder(contentDispositionType)
-                .filename(PathUtil.extractResourceName(path))
-                .build();
+        var contentDisposition = getContentDisposition(path);
 
         var headers = new HttpHeaders();
 
@@ -83,6 +76,19 @@ public class ResourceController implements ResourceApi {
                 .body(streamingResponseBody);
     }
 
+    private ContentDisposition getContentDisposition(String path) {
+        var contentDispositionType = ContentDispositionType.ATTACHMENT.getValue();
+
+        var fileName = PathUtil.isDirectory(path)
+                ? PathUtil.extractResourceName(path) + ".zip"
+                : PathUtil.extractResourceName(path);
+
+        return ContentDisposition.builder(contentDispositionType)
+                .filename(fileName, Charset.defaultCharset())
+                .build();
+    }
+
+    @Override
     @GetMapping("/resource/move")
     public ResponseEntity<ResourceResponseDto> move(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
