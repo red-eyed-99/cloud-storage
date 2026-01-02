@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import ru.redeyed.cloudstorage.common.util.PathUtil;
-import ru.redeyed.cloudstorage.resource.ResourcePathUtil;
 import ru.redeyed.cloudstorage.s3.BucketName;
 import ru.redeyed.cloudstorage.s3.SimpleStorageService;
 import ru.redeyed.cloudstorage.s3.StorageObjectInfo;
@@ -188,13 +187,10 @@ public class MinioStorageService implements SimpleStorageService {
         for (var resultItem : resultItemsToDownload) {
             var item = resultItem.get();
 
-            var entryName = ResourcePathUtil.removeUserFolder(item.objectName());
+            var directoryName = PathUtil.extractResourceName(path);
+            var entryName = PathUtil.extractPathFromDirectory(directoryName, item.objectName());
 
-            var zipEntry = item.isDir()
-                    ? new ZipEntry(entryName + PathUtil.PATH_DELIMITER)
-                    : new ZipEntry(entryName);
-
-            zipOutputStream.putNextEntry(zipEntry);
+            zipOutputStream.putNextEntry(new ZipEntry(entryName));
 
             try (var inputStream = minioClient.getObject(
                     GetObjectArgs.builder()

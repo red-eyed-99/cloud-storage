@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.support.ParameterDeclarations;
+import ru.redeyed.cloudstorage.common.util.PathUtil;
 import ru.redeyed.cloudstorage.test.resource.ResourcePaths;
 import java.util.List;
 import java.util.stream.Stream;
@@ -41,9 +42,9 @@ public class DownloadDirectoryArgumentsProvider implements ArgumentsProvider {
         var path = ResourcePaths.FOLDER_1_FOLDER_2;
 
         var resourcePaths = List.of(
-                ResourcePaths.FOLDER_1_FOLDER_2,
-                ResourcePaths.FOLDER_1_FOLDER_2_FILE_3_TXT,
-                ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3
+                PathUtil.removeRootParentDirectory(ResourcePaths.FOLDER_1_FOLDER_2),
+                PathUtil.removeRootParentDirectory(ResourcePaths.FOLDER_1_FOLDER_2_FILE_3_TXT),
+                PathUtil.removeRootParentDirectory(ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3)
         );
 
         return Arguments.of(path, resourcePaths);
@@ -51,7 +52,8 @@ public class DownloadDirectoryArgumentsProvider implements ArgumentsProvider {
 
     private Arguments getFolderThreeArguments() {
         var path = ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3;
-        var resourcePaths = List.of(ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3);
+        var directoryPath = PathUtil.extractResourceName(path) + PathUtil.PATH_DELIMITER;
+        var resourcePaths = List.of(directoryPath);
         return Arguments.of(path, resourcePaths);
     }
 
