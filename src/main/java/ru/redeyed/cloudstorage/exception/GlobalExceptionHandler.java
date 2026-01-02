@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import ru.redeyed.cloudstorage.common.util.DataUnit;
 import ru.redeyed.cloudstorage.resource.dto.MaxFileSizeErrorResponseDto;
@@ -104,6 +105,11 @@ public class GlobalExceptionHandler {
         }
 
         return false;
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ErrorResponseDto> handle(MissingServletRequestPartException exception) {
+        return getErrorResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
