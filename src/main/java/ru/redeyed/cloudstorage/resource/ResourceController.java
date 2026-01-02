@@ -31,23 +31,26 @@ import java.util.List;
 @RequestMapping("/api")
 @Validated
 @RequiredArgsConstructor
-public class ResourceController {
+public class ResourceController implements ResourceApi {
 
     private final ResourceService resourceService;
 
+    @Override
     @GetMapping("/resource")
-    public ResponseEntity<ResourceResponseDto> get(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                   @RequestParam @ValidResourcePath String path) {
-
+    public ResponseEntity<ResourceResponseDto> get(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam String path
+    ) {
         var resourceResponseDto = resourceService.getResource(userDetails.getId(), path);
         return ResponseEntity.ok(resourceResponseDto);
     }
 
-    @PostMapping("/resource")
+    @Override
+    @PostMapping(path = "/resource", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<ResourceResponseDto>> uploadFiles(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @RequestParam(defaultValue = PathUtil.PATH_DELIMITER) @ValidResourcePath(onlyDirectory = true) String path,
-            @RequestPart @ValidResourceFiles List<MultipartFile> files
+            @RequestParam(defaultValue = PathUtil.PATH_DELIMITER) String path,
+            @RequestPart List<MultipartFile> files
     ) {
         var resourceResponseDtos = resourceService.uploadFiles(userDetails.getId(), path, files);
 
@@ -56,10 +59,12 @@ public class ResourceController {
                 .body(resourceResponseDtos);
     }
 
+    @Override
     @GetMapping("/resource/download")
-    public ResponseEntity<StreamingResponseBody> download(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                          @RequestParam @ValidResourcePath String path) {
-
+    public ResponseEntity<StreamingResponseBody> download(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam String path
+    ) {
         var streamingResponseBody = resourceService.downloadResource(userDetails.getId(), path);
 
         var contentDispositionType = ContentDispositionType.ATTACHMENT.getValue();
@@ -79,45 +84,51 @@ public class ResourceController {
     }
 
     @GetMapping("/resource/move")
-    @SameResourceType
-    public ResponseEntity<ResourceResponseDto> move(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                    @RequestParam @ValidResourcePath String from,
-                                                    @RequestParam @ValidResourcePath String to) {
-
+    public ResponseEntity<ResourceResponseDto> move(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam String from,
+            @RequestParam String to
+    ) {
         var resourceResponseDto = resourceService.moveResource(userDetails.getId(), from, to);
         return ResponseEntity.ok(resourceResponseDto);
     }
 
+    @Override
     @GetMapping("/resource/search")
-    public ResponseEntity<List<ResourceResponseDto>> search(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                            @RequestParam @ValidSearchQuery String query) {
-
+    public ResponseEntity<List<ResourceResponseDto>> search(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam String query
+    ) {
         var resourceResponseDtos = resourceService.search(userDetails.getId(), query);
         return ResponseEntity.ok(resourceResponseDtos);
     }
 
+    @Override
     @DeleteMapping("/resource")
-    public ResponseEntity<Void> delete(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                       @RequestParam @ValidResourcePath String path) {
-
+    public ResponseEntity<Void> delete(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam String path
+    ) {
         resourceService.deleteResource(userDetails.getId(), path);
         return ResponseEntity.noContent().build();
     }
 
+    @Override
     @GetMapping("/directory")
-    public ResponseEntity<List<ResourceResponseDto>> getDirectoryContent(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                                         @RequestParam(defaultValue = PathUtil.PATH_DELIMITER)
-                                                                         @ValidResourcePath(onlyDirectory = true) String path) {
-
+    public ResponseEntity<List<ResourceResponseDto>> getDirectoryContent(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam(defaultValue = PathUtil.PATH_DELIMITER) String path
+    ) {
         var resourceResponseDtos = resourceService.getDirectoryContent(userDetails.getId(), path);
         return ResponseEntity.ok(resourceResponseDtos);
     }
 
+    @Override
     @PostMapping("/directory")
-    public ResponseEntity<ResourceResponseDto> createDirectory(@AuthenticationPrincipal UserDetailsImpl userDetails,
-                                                               @RequestParam @ValidResourcePath(onlyDirectory = true)
-                                                               String path) {
-
+    public ResponseEntity<ResourceResponseDto> createDirectory(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam String path
+    ) {
         var resourceResponseDto = resourceService.createDirectory(userDetails.getId(), path);
 
         return ResponseEntity
