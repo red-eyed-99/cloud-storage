@@ -350,15 +350,226 @@ public interface ResourceApi {
             @ValidResourcePath String path
     );
 
+    @Operation(summary = "Moving resources")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ResourceResponseDto.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Moving a file",
+                                            value = """
+                                                    {
+                                                       "path": "folder1/folder2/",
+                                                       "name": "file.txt",
+                                                       "size": 123,
+                                                       "type": "FILE"
+                                                     }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Moving a directory",
+                                            value = """
+                                                    {
+                                                       "path": "/",
+                                                       "name": "folder1",
+                                                       "type": "DIRECTORY"
+                                                     }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+
+            @ApiResponse(responseCode = "400", description = "Invalid request data",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Parameter 'from' must not be null or empty."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "401", description = "User unauthorized",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Unauthorized."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "404", description = "Resource not found",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "File not found."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "409", description = "Resource in the target path already exists",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "File already exists."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Internal server error."
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
     @SameResourceType
     ResponseEntity<ResourceResponseDto> move(
             UserDetailsImpl userDetails,
+            @Parameter(
+                    example = "folder/file.txt",
+                    description = "source resource path"
+            )
             @ValidResourcePath String from,
+            @Parameter(
+                    example = "file.txt",
+                    description = "target resource path"
+            )
             @ValidResourcePath String to
     );
 
+    @Operation(summary = "Searching resources")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            array = @ArraySchema(schema = @Schema(implementation = ResourceResponseDto.class)),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Found resources",
+                                            value = """
+                                                    [
+                                                        {
+                                                           "path": "folder1/folder2/",
+                                                           "name": "file.txt",
+                                                           "size": 123,
+                                                           "type": "FILE"
+                                                         },
+                                                         {
+                                                           "path": "/",
+                                                           "name": "file444.txt",
+                                                           "size": 456,
+                                                           "type": "FILE"
+                                                         },
+                                                         {
+                                                           "path": "folder1/folder2/folder3/",
+                                                           "name": "folder4",
+                                                           "type": "DIRECTORY"
+                                                         }
+                                                     ]
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Resources not found",
+                                            value = "[]"
+                                    )
+                            }
+                    )
+            ),
+
+            @ApiResponse(responseCode = "400", description = "Invalid request data",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Parameter 'query' length must be no more than 200 characters."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "401", description = "User unauthorized",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Unauthorized."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Internal server error."
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
     ResponseEntity<List<ResourceResponseDto>> search(
             UserDetailsImpl userDetails,
+            @Parameter(
+                    examples = {
+                            @ExampleObject(
+                                    name = "file.txt",
+                                    description = "Searches all file.txt",
+                                    value = "file.txt"
+                            ),
+                            @ExampleObject(
+                                    name = ".txt",
+                                    description = "Searches all .txt files",
+                                    value = ".txt"
+                            ),
+                            @ExampleObject(
+                                    name = "f",
+                                    description = "Searches all resources contains 'f' in name",
+                                    value = "f"
+                            )
+                    },
+                    description = "resource search query"
+            )
             @ValidSearchQuery String query
     );
 
@@ -438,13 +649,203 @@ public interface ResourceApi {
             @ValidResourcePath String path
     );
 
+    @Operation(summary = "Get directory content info")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ResourceResponseDto.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Get non-empty directory content",
+                                            value = """
+                                                    [
+                                                        {
+                                                           "path": "folder1/",
+                                                           "name": "file.txt",
+                                                           "size": 123,
+                                                           "type": "FILE"
+                                                         },
+                                                         {
+                                                           "path": "folder1/",
+                                                           "name": "video.mp4",
+                                                           "size": 123456,
+                                                           "type": "FILE"
+                                                         },
+                                                         {
+                                                           "path": "folder1/",
+                                                           "name": "folder2",
+                                                           "type": "DIRECTORY"
+                                                         }
+                                                     ]
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Get empty directory content",
+                                            value = "[]"
+                                    )
+                            }
+                    )
+            ),
+
+            @ApiResponse(responseCode = "400", description = "Invalid request data",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Parameter 'path' must end with '/'."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "401", description = "User unauthorized",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Unauthorized."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "404", description = "Directory not found",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Directory not found."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Internal server error."
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
     ResponseEntity<List<ResourceResponseDto>> getDirectoryContent(
             UserDetailsImpl userDetails,
+            @Parameter(
+                    example = "folder/",
+                    description = "path to directory"
+            )
             @ValidResourcePath(onlyDirectory = true) String path
     );
 
+    @Operation(summary = "Create empty directory")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "OK",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = ResourceResponseDto.class,
+                                    example = """
+                                            {
+                                              "path": "folder1/",
+                                              "name": "folder2",
+                                              "type": "DIRECTORY"
+                                            }
+                                            """)
+                    )
+            ),
+
+            @ApiResponse(responseCode = "400", description = "Invalid request data",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Parameter 'path' must end with '/'."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "401", description = "User unauthorized",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Unauthorized."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "404", description = "Parent directory not found",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Parent directory not found."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "409", description = "Directory already exists",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Directory already exists."
+                                            }
+                                            """
+                            )
+                    )
+            ),
+
+            @ApiResponse(responseCode = "500", description = "Internal server error",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                            {
+                                              "message": "Internal server error."
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
     ResponseEntity<ResourceResponseDto> createDirectory(
             UserDetailsImpl userDetails,
+            @Parameter(
+                    example = "folder1/folder2/",
+                    description = "path to directory"
+            )
             @ValidResourcePath(onlyDirectory = true) String path
     );
 }
