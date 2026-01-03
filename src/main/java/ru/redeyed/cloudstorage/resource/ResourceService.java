@@ -284,6 +284,8 @@ public class ResourceService {
 
         var foundObjectsInfo = storageService.search(BucketName.USER_FILES, path, pattern);
 
+        foundObjectsInfo.removeIf(objectInfo -> ResourcePathUtil.isUserFolder(objectInfo.path()));
+
         return resourceMapper.toResourceResponseDtos(foundObjectsInfo);
     }
 }
