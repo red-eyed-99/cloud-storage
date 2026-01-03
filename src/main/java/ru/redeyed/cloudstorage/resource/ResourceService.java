@@ -1,6 +1,7 @@
 package ru.redeyed.cloudstorage.resource;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -88,7 +89,11 @@ public class ResourceService {
 
         storageService.createDirectory(BucketName.USER_FILES, directoryPath);
 
-        var createdPath = PathUtil.removeResourceName(path);
+        var createdPath = StringUtils.defaultIfEmpty(
+                PathUtil.removeResourceName(path),
+                PathUtil.PATH_DELIMITER
+        );
+
         var directoryName = PathUtil.extractResourceName(path);
 
         return new ResourceResponseDto(createdPath, directoryName, null, ResourceType.DIRECTORY);
