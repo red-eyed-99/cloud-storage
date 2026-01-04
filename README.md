@@ -22,11 +22,12 @@ A ready-made [frontend](https://github.com/zhukovsd/cloud-storage-frontend/) was
     ```
     git clone https://github.com/red-eyed-99/cloud-storage.git
     ```
-3. Go to **docker** folder and run **compose.yaml**
+3. Go to **docker** folder from project root and run **compose.yaml**
    ```
       cd docker
       docker compose up -d
    ```
 4. Now the web application should be accessible at http://localhost:8080 and swagger-ui at http://localhost:8081/swagger-ui/index.html
 
+> [!NOTE]
 > To run the back-end via IDE, simply stop the back-end container in docker and run it.
