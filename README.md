@@ -14,6 +14,7 @@ This web-application is a multi-user file cloud. Users can use it to upload and 
  - Minio
  - Lombok, Mapstruct
  - Testcontainers
+ - Docker
 ## Front-end
 A ready-made [frontend](https://github.com/zhukovsd/cloud-storage-frontend/) was used with some modifications.
 ## How to run a project locally
