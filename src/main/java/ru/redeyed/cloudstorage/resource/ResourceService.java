@@ -237,6 +237,10 @@ public class ResourceService {
     }
 
     private ResourceResponseDto moveDirectory(String fromPath, String toPath) {
+        if (fromPath.equals(PathUtil.removeResourceName(toPath))) {
+            throw new ResourceAlreadyExistsException("Can't move directory into itself.");
+        }
+
         storageService.findDirectoryInfo(BucketName.USER_FILES, fromPath)
                 .orElseThrow(() -> new ResourceNotFoundException(ResourceType.DIRECTORY));
 

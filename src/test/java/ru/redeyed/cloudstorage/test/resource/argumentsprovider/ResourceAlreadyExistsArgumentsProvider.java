@@ -19,6 +19,7 @@ public class ResourceAlreadyExistsArgumentsProvider implements ArgumentsProvider
                 Arguments.of(ResourcePaths.UNDEFINED_FILE_1, ResourcePaths.FILE_1_TXT),
                 getDirectoryWithFileNameExistsArguments(),
                 getFileWithDirectoryNameExistsArguments(),
+                getMoveDirectoryToItselfArguments(),
                 Arguments.of(ResourcePaths.FOLDER_1, ResourcePaths.FOLDER_1),
                 Arguments.of(ResourcePaths.FOLDER_1, ResourcePaths.FOLDER_4),
                 Arguments.of(ResourcePaths.FILE_1_TXT, ResourcePaths.FOLDER_1_FILE_1_TXT),
@@ -35,6 +36,12 @@ public class ResourceAlreadyExistsArgumentsProvider implements ArgumentsProvider
     private Arguments getFileWithDirectoryNameExistsArguments() {
         var fromPath = ResourcePaths.FOLDER_1_UNDEFINED_FILE_1_FOLDER;
         var toPath = PathUtil.removeRootParentDirectory(ResourcePaths.FOLDER_1_UNDEFINED_FILE_1_FOLDER);
+        return Arguments.of(fromPath, toPath);
+    }
+
+    private Arguments getMoveDirectoryToItselfArguments() {
+        var fromPath = ResourcePaths.FOLDER_1;
+        var toPath = ResourcePaths.FOLDER_1 + ResourcePaths.FOLDER_1;
         return Arguments.of(fromPath, toPath);
     }
 }
