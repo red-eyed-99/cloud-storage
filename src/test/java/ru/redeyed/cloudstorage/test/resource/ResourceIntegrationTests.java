@@ -781,6 +781,25 @@ public class ResourceIntegrationTests extends BaseIntegrationTest {
         }
 
         @ParameterizedTest
+        @DisplayName("File with the same name exists")
+        @ValueSource(strings = {
+                ResourcePaths.UNDEFINED_FILE_1 + PathUtil.PATH_DELIMITER,
+                ResourcePaths.FOLDER_1_FILE_1_TXT + PathUtil.PATH_DELIMITER,
+                ResourcePaths.FOLDER_1_FOLDER_2_FILE_3_TXT + PathUtil.PATH_DELIMITER
+        })
+        void shouldReturnConflictWhenFileWithSameNameExists(String path) throws Exception {
+            resourceManager.createDefaultResources();
+
+            var authSession = redisSessionManager.createAuthenticatedSession();
+            var authSessionInfo = redisSessionManager.getSessionInfo(authSession);
+
+            mockMvc.perform(post(ApiUtil.DIRECTORY_URL)
+                            .cookie(authSessionInfo.cookie())
+                            .queryParam(ApiUtil.REQUEST_PARAM_PATH_NAME, path))
+                    .andExpect(status().isConflict());
+        }
+
+        @ParameterizedTest
         @DisplayName("Parent directory doesn't exist")
         @ValueSource(strings = {
                 "non-existent-parent/new-folder-1/",

@@ -87,6 +87,8 @@ public class ResourceService {
             }
         }
 
+        validateObjectsConflict(directoryPath);
+
         storageService.createDirectory(BucketName.USER_FILES, directoryPath);
 
         var createdPath = StringUtils.defaultIfEmpty(
@@ -110,7 +112,9 @@ public class ResourceService {
             var filePath = Objects.requireNonNull(file.getOriginalFilename());
 
             if (PathUtil.isFileName(filePath)) {
-                checkFileNotExists(userFilesPath, filePath);
+                var fullFilePath = userFilesPath + filePath;
+                checkFileNotExists(fullFilePath);
+                validateObjectsConflict(fullFilePath);
                 continue;
             }
 
@@ -141,10 +145,8 @@ public class ResourceService {
                 : ResourcePathUtil.createUserResourcePath(userId, path);
     }
 
-    private void checkFileNotExists(String userFilesPath, String filePath) {
-        var path = userFilesPath + filePath;
-
-        var fileExists = storageService.fileExists(BucketName.USER_FILES, path);
+    private void checkFileNotExists(String fullFilePath) {
+        var fileExists = storageService.fileExists(BucketName.USER_FILES, fullFilePath);
 
         if (fileExists) {
             throw new ResourceAlreadyExistsException(ResourceType.FILE);
@@ -155,6 +157,8 @@ public class ResourceService {
         if (storageService.directoryExists(BucketName.USER_FILES, rootDirectoryPath)) {
             throw new ResourceAlreadyExistsException(ResourceType.DIRECTORY);
         }
+
+        validateObjectsConflict(rootDirectoryPath);
 
         return storageService.createDirectory(BucketName.USER_FILES, rootDirectoryPath);
     }
@@ -222,6 +226,8 @@ public class ResourceService {
     public ResourceResponseDto moveResource(UUID userId, String fromPath, String toPath) {
         var fromResourcePath = ResourcePathUtil.createUserResourcePath(userId, fromPath);
         var toResourcePath = ResourcePathUtil.createUserResourcePath(userId, toPath);
+
+        validateObjectsConflict(toResourcePath);
 
         if (PathUtil.isDirectory(fromPath)) {
             return moveDirectory(fromResourcePath, toResourcePath);
@@ -292,5 +298,23 @@ public class ResourceService {
         foundObjectsInfo.removeIf(objectInfo -> ResourcePathUtil.isUserFolder(objectInfo.path()));
 
         return resourceMapper.toResourceResponseDtos(foundObjectsInfo);
+    }
+
+    private void validateObjectsConflict(String path) {
+        var message = "It is not allowed to create a file and a folder with the same name in the same directory";
+
+        if (PathUtil.isDirectory(path)) {
+            var filePath = PathUtil.trimLastSlash(path);
+
+            if (storageService.fileExists(BucketName.USER_FILES, filePath)) {
+                throw new ResourceAlreadyExistsException(message);
+            }
+        }
+
+        var directoryPath = path + PathUtil.PATH_DELIMITER;
+
+        if (storageService.directoryExists(BucketName.USER_FILES, directoryPath)) {
+            throw new ResourceAlreadyExistsException(message);
+        }
     }
 }

@@ -20,7 +20,9 @@ public class UploadExistingResourceArgumentsProvider implements ArgumentsProvide
                 getUploadExistingInRootFileArguments(),
                 getUploadExistingInRootFolderArguments(),
                 getUploadExistingInDirectoryFileArguments(),
-                getUploadExistingInDirectoryFolderArguments()
+                getUploadExistingInDirectoryFolderArguments(),
+                getFileNameSameAsDirectoryArguments(),
+                getDirectoryNameSameAsFileArguments()
         );
     }
 
@@ -45,6 +47,21 @@ public class UploadExistingResourceArgumentsProvider implements ArgumentsProvide
     private Arguments getUploadExistingInDirectoryFolderArguments() {
         var path = ResourcePaths.FOLDER_1;
         var filePath = PathUtil.removeRootParentDirectory(ResourcePaths.FOLDER_1_FOLDER_2 + "non-existent-file.txt");
+        var file = MockFileCreator.createDefault(filePath);
+        return Arguments.of(path, List.of(file));
+    }
+
+    private Arguments getFileNameSameAsDirectoryArguments() {
+        var path = PathUtil.PATH_DELIMITER;
+        var filePath = PathUtil.trimLastSlash(ResourcePaths.FOLDER_1);
+        var file = MockFileCreator.createDefault(filePath);
+        return Arguments.of(path, List.of(file));
+    }
+
+    private Arguments getDirectoryNameSameAsFileArguments() {
+        var path = PathUtil.PATH_DELIMITER;
+        var directoryPath = ResourcePaths.UNDEFINED_FILE_1 + PathUtil.PATH_DELIMITER;
+        var filePath = directoryPath + "new-file.txt";
         var file = MockFileCreator.createDefault(filePath);
         return Arguments.of(path, List.of(file));
     }

@@ -24,6 +24,7 @@ public class ResourceManager {
             ResourcePaths.FOLDER_1,
             ResourcePaths.FOLDER_1_FILE_1_TXT,
             ResourcePaths.FOLDER_1_FILE_2_TXT,
+            ResourcePaths.FOLDER_1_UNDEFINED_FILE_1_FOLDER,
             ResourcePaths.FOLDER_1_FOLDER_2,
             ResourcePaths.FOLDER_1_FOLDER_2_FILE_3_TXT,
             ResourcePaths.FOLDER_1_FOLDER_2_FOLDER_3,

@@ -16,21 +16,10 @@ public class MoveFileArgumentsProvider implements ArgumentsProvider {
     public @NotNull Stream<? extends Arguments> provideArguments(@NotNull ParameterDeclarations parameters,
                                                                  @NotNull ExtensionContext context) {
         return Stream.of(
-                getUndefinedFileOneArguments(),
                 getFileOneTxtArguments(),
                 getFileTwoTxtArguments(),
                 getFileThreeTxtArguments()
         );
-    }
-
-    private Arguments getUndefinedFileOneArguments() {
-        var from = ResourcePaths.UNDEFINED_FILE_1;
-        var fileName = PathUtil.extractResourceName(from);
-        var to = ResourcePaths.FOLDER_1 + fileName;
-        var expectedPath = PathUtil.removeResourceName(to);
-        var expectedSize = MockFileCreator.DEFAULT_CONTENT_SIZE_BYTES;
-
-        return Arguments.of(from, to, expectedPath, fileName, expectedSize);
     }
 
     private Arguments getFileOneTxtArguments() {

@@ -10,6 +10,7 @@ public class ResourcePaths {
     public static final String FOLDER_1 = "folder-1/";
     public static final String FOLDER_1_FILE_1_TXT = "folder-1/file-1.txt";
     public static final String FOLDER_1_FILE_2_TXT = "folder-1/file-2.txt";
+    public static final String FOLDER_1_UNDEFINED_FILE_1_FOLDER = "folder-1/undefined-file-1/";
     public static final String FOLDER_1_FOLDER_2 = "folder-1/folder-2/";
     public static final String FOLDER_1_FOLDER_2_FILE_3_TXT = "folder-1/folder-2/file-3.txt";
     public static final String FOLDER_1_FOLDER_2_FOLDER_3 = "folder-1/folder-2/folder-3/";
