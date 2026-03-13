@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sts-redis
+  labels:
+    app: redis
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:8.4.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6379
+              name: redis
+          command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+          envFrom:
+            - secretRef:
+                name: secrets
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+            - name: redis-conf
+              mountPath: /usr/local/etc/redis
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: pvc-redis
+        - name: redis-conf
+          configMap:
+            name: cm-redis

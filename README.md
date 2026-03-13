@@ -18,6 +18,7 @@ This web-application is a multi-user file cloud. Users can use it to upload and 
 ## Front-end
 A ready-made [frontend](https://github.com/zhukovsd/cloud-storage-frontend/) was used with some modifications.
 ## How to run a project locally
+### Docker
 1. Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 2. Clone repository
     ```
@@ -32,3 +33,17 @@ A ready-made [frontend](https://github.com/zhukovsd/cloud-storage-frontend/) was
 
 > [!NOTE]
 > To run the back-end via IDE, simply stop the back-end container in docker and run it.
+
+### Kubernetes
+1. Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+2. Run kubernetes cluster via Docker Desktop.
+3. Apply file to run nginx ingress controller.
+   ```
+   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+   ```
+4. Open k8s folder from root project and apply manifest files.
+   ```
+   cd k8s
+   kubectl apply -R -f . 
+   ```
+5. Now the web application should be accessible at http://localhost:80 and swagger-ui at http://localhost:80/swagger-ui/index.html
