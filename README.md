@@ -48,3 +48,28 @@ A ready-made [frontend](https://github.com/zhukovsd/cloud-storage-frontend/) was
    kubectl apply -R -f . 
    ```
 5. Now the web application should be accessible at http://localhost:80 and swagger-ui at http://localhost:80/swagger-ui/index.html
+
+#### Kubernetes Dashboard
+1. Apply the manifest to launch the required resources for the dashboard.
+   ```
+   kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.2.0/aio/deploy/recommended.yaml
+   ```
+2. Run a proxy in a separate terminal to gain access to dashboard.
+   ```
+   kubectl proxy
+   ```
+3. The dashboard is now available on http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/
+4. Apply manifests to create an administrator role.
+   ```
+   cd ../dashboard
+   kubectl apply -f .
+   ```
+5. Get an authentication token.
+- Temporary
+  ```
+  kubectl create token admin-user
+  ```
+- Permanent
+   ```
+   kubectl get secret admin-user -o go-template='{{.data.token | base64decode}}'
+   ```
