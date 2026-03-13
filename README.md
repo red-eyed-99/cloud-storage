@@ -15,6 +15,7 @@ This web-application is a multi-user file cloud. Users can use it to upload and 
  - Lombok, Mapstruct
  - Testcontainers
  - Docker
+ - Kubernetes
 ## Front-end
 A ready-made [frontend](https://github.com/zhukovsd/cloud-storage-frontend/) was used with some modifications.
 ## How to run a project locally
@@ -41,9 +42,9 @@ A ready-made [frontend](https://github.com/zhukovsd/cloud-storage-frontend/) was
    ```
    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
    ```
-4. Open k8s folder from root project and apply manifest files.
+4. Open /k8s/app folder from root project and apply manifest files.
    ```
-   cd k8s
+   cd /k8s/app
    kubectl apply -R -f . 
    ```
 5. Now the web application should be accessible at http://localhost:80 and swagger-ui at http://localhost:80/swagger-ui/index.html
